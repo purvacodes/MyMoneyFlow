@@ -466,9 +466,8 @@
     </div>
   </div>
 </div>
-
 <script type="module">
-import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { 
   getAuth, 
   signInWithPopup, 
@@ -484,12 +483,11 @@ import {
   setDoc, 
   onSnapshot, 
   collection, 
-  addDoc, 
   updateDoc, 
   deleteDoc 
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-// HARDCODED FIREBASE KEYS (Direct Integration)
+// HARDCODED FIREBASE KEYS
 const firebaseConfig = {
   apiKey: "AIzaSyB25VVAI7YRTmnPJ8j_I1cVskvje_1TRYA",
   authDomain: "mymoneyflow15.firebaseapp.com",
@@ -548,7 +546,6 @@ let firebaseAppInstance = null;
 let firebaseAuthInstance = null;
 let firebaseDbInstance = null;
 
-// Utility functions
 const inr = (n) => "₹" + Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 });
 const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const monthKey = (d) => (d ? d.slice(0, 7) : "");
@@ -570,8 +567,7 @@ function loadLocalStorage() {
       state.transactions = [];
     }
   } catch(e) {
-    state.settings = { ...defaultSettings };
-    state.transactions = [];
+    console.error("Local storage load error:", e);
   }
 }
 
@@ -581,7 +577,9 @@ function saveLocalStorage() {
       settings: state.settings,
       transactions: state.transactions
     }));
-  } catch(e) {}
+  } catch(e) {
+    console.error("Local storage save error:", e);
+  }
 }
 
 function showToast(message, icon = "✅") {
@@ -645,32 +643,29 @@ async function initFirebase() {
     firebaseAuthInstance = getAuth(firebaseAppInstance);
     firebaseDbInstance = getFirestore(firebaseAppInstance);
 
-    // STRICT AUTH STATE LISTENER
     onAuthStateChanged(firebaseAuthInstance, (user) => {
       const mainApp = document.getElementById("ft-root");
       const welcomeGate = document.getElementById("welcome-gate");
       const authModal = document.getElementById("auth-modal");
 
       if (user && !user.isAnonymous) {
-        // LOGGED IN: Unlock Dashboard
         state.user = user;
         state.userId = user.uid;
         state.isCloudActive = true;
 
-        if (mainApp) mainApp.style.display = "flex"; // Show Dashboard
-        welcomeGate?.classList.add("hidden-gate"); // Hide Gate
+        if (mainApp) mainApp.style.display = "flex";
+        welcomeGate?.classList.add("hidden-gate");
         authModal?.classList.remove("active");
 
         attachFirestoreRealtimeListeners(user.uid);
         render();
       } else {
-        // NOT LOGGED IN: Strictly Lock Gate & Hide Dashboard
         state.user = null;
         state.userId = null;
         state.isCloudActive = false;
 
-        if (mainApp) mainApp.style.display = "none"; // Hide Dashboard Completely
-        welcomeGate?.classList.remove("hidden-gate"); // Show Gate
+        if (mainApp) mainApp.style.display = "none";
+        welcomeGate?.classList.remove("hidden-gate");
       }
 
       updateSyncStatusUI();
@@ -698,7 +693,8 @@ function attachFirestoreRealtimeListeners(userId) {
   unsubTx = onSnapshot(txColRef, (querySnap) => {
     const txs = [];
     querySnap.forEach((docSnap) => {
-      txs.push({ id: docSnap.id, ...docSnap.data() });
+      // FIXED: docSnap.id is strictly enforced at the end to guarantee ID matching
+      txs.push({ ...docSnap.data(), id: docSnap.id });
     });
     state.transactions = txs;
     saveLocalStorage();
@@ -706,7 +702,7 @@ function attachFirestoreRealtimeListeners(userId) {
   });
 }
 
-// Data persistence wrappers
+// HARDENED WRITE FUNCTIONS (WITH ERROR LOGGING & TOASTS)
 async function saveSettings(nextSettings) {
   state.settings = nextSettings;
   saveLocalStorage();
@@ -716,7 +712,10 @@ async function saveSettings(nextSettings) {
       const settingsDocRef = doc(firebaseDbInstance, 'artifacts', APP_ID, 'users', state.userId, 'settings', 'userSettings');
       await setDoc(settingsDocRef, nextSettings, { merge: true });
       showToast("Saved settings to Cloud!", "💾");
-    } catch(e) {}
+    } catch(e) {
+      console.error("Cloud Settings Error:", e);
+      showToast("Failed to save settings to cloud", "❌");
+    }
   }
 }
 
@@ -727,10 +726,14 @@ async function addTransaction(txn) {
 
   if (state.isCloudActive && firebaseDbInstance && state.userId) {
     try {
-      const txColRef = collection(firebaseDbInstance, 'artifacts', APP_ID, 'users', state.userId, 'transactions');
-      await addDoc(txColRef, { ...txn, createdAt: new Date().toISOString() });
+      // FIXED: setDoc using explicit ID matching local state
+      const txDocRef = doc(firebaseDbInstance, 'artifacts', APP_ID, 'users', state.userId, 'transactions', txn.id);
+      await setDoc(txDocRef, { ...txn, createdAt: new Date().toISOString() });
       showToast("Added transaction to Cloud!", "➕");
-    } catch(e) {}
+    } catch(e) {
+      console.error("Cloud Add Transaction Error:", e);
+      showToast("Failed to sync new transaction", "❌");
+    }
   }
   render();
 }
@@ -747,7 +750,10 @@ async function updateTransaction(txId, txnData) {
       const txDocRef = doc(firebaseDbInstance, 'artifacts', APP_ID, 'users', state.userId, 'transactions', txId);
       await updateDoc(txDocRef, txnData);
       showToast("Updated transaction!", "✏️");
-    } catch(e) {}
+    } catch(e) {
+      console.error("Cloud Update Transaction Error:", e);
+      showToast("Failed to update transaction in cloud", "❌");
+    }
   }
   render();
 }
@@ -761,7 +767,10 @@ async function deleteTransaction(txId) {
       const txDocRef = doc(firebaseDbInstance, 'artifacts', APP_ID, 'users', state.userId, 'transactions', txId);
       await deleteDoc(txDocRef);
       showToast("Deleted from Cloud", "🗑️");
-    } catch(e) {}
+    } catch(e) {
+      console.error("Cloud Delete Transaction Error:", e);
+      showToast("Failed to delete from cloud", "❌");
+    }
   }
   render();
 }
@@ -787,7 +796,6 @@ function renderDashboard() {
       <p class="muted" style="font-size:14px; margin-top:4px;">${esc(monthLabel(currentMonthKey))}</p>
     </div>
 
-    <!-- Quick Stat Cards -->
     <div class="grid grid-4" style="margin-top:24px;">
       <div class="card"><div class="stat-label">SBI balance</div><div class="stat-value" style="color:var(--sbi)">${inr(balances.SBI)}</div></div>
       <div class="card"><div class="stat-label">INDUS balance</div><div class="stat-value" style="color:var(--indus)">${inr(balances.INDUS)}</div></div>
@@ -799,7 +807,6 @@ function renderDashboard() {
       </div>
     </div>
 
-    <!-- Category Spending Visualizer -->
     <div class="card" style="margin-top:24px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:8px;">
         <div>
@@ -811,7 +818,6 @@ function renderDashboard() {
       ${categorySpends.length === 0 ? `
         <div class="empty" style="padding: 24px 0;">No expenses logged for ${esc(monthLabel(currentMonthKey))} yet. Add transactions to view analytics.</div>
       ` : `
-        <!-- Stacked Bar Visual -->
         <div class="bar-wrap" style="margin-bottom:24px;">
           ${categorySpends.map((item) => {
             const pct = totalSpent > 0 ? ((item.amount / totalSpent) * 100).toFixed(1) : 0;
@@ -820,7 +826,6 @@ function renderDashboard() {
           }).join("")}
         </div>
 
-        <!-- Progress List -->
         <div style="display:flex; flex-direction:column; gap:14px;">
           ${categorySpends.map((item) => {
             const pct = totalSpent > 0 ? Math.round((item.amount / totalSpent) * 100) : 0;
@@ -859,7 +864,7 @@ function renderTransactions() {
 
   filtered.sort((a, b) => {
     if (sortBy === "date-desc") return (b.date || "").localeCompare(a.date || "");
-    if (sortBy === "date-asc") return (a.date || "").localeCompare(a.date || "");
+    if (sortBy === "date-asc") return (a.date || "").localeCompare(b.date || "");
     if (sortBy === "amount-desc") return (Number(b.amount) || 0) - (Number(a.amount) || 0);
     if (sortBy === "amount-asc") return (Number(a.amount) || 0) - (Number(b.amount) || 0);
     return 0;
@@ -877,7 +882,6 @@ function renderTransactions() {
   return `
     <h1 style="font-size:24px;">Transactions</h1>
 
-    <!-- Form Card -->
     <div class="card" style="margin-top:20px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
         <h3 style="font-size:16px;">${editingTx ? "Edit transaction" : "Add a transaction"}</h3>
@@ -920,7 +924,6 @@ function renderTransactions() {
       </div>
     </div>
 
-    <!-- Filters & Sorting Bar -->
     <div class="card" style="margin-top:20px;">
       <h3 style="font-size:15px; margin-bottom:12px;">Filters & Sorting</h3>
       <div class="grid grid-4">
@@ -957,7 +960,6 @@ function renderTransactions() {
       </div>
     </div>
 
-    <!-- Transactions Table -->
     <div class="card" style="margin-top:20px; padding:0;">
       <div style="overflow-x:auto;">
         <table>
@@ -1065,7 +1067,6 @@ function renderSettings() {
   return `
     <h1 style="font-size:24px;">Settings & Preferences</h1>
 
-    <!-- Starting Balances -->
     <div class="card" style="margin-top:20px;">
       <h3 style="font-size:16px; margin-bottom:16px;">Core Opening Account Balances</h3>
       <div class="grid grid-2">
@@ -1075,7 +1076,6 @@ function renderSettings() {
       <button class="btn" id="save-settings-btn" style="margin-top:20px;">Save Opening Balances</button>
     </div>
 
-    <!-- Data Management -->
     <div class="card" style="margin-top:20px;">
       <h3 style="font-size:16px; margin-bottom:8px;">Data Import & Export</h3>
       <p class="muted" style="font-size:13px; margin-bottom:16px;">Export your complete transaction ledger to JSON or import existing backup.</p>
@@ -1200,7 +1200,6 @@ function attachSettingsEvents() {
     render();
   });
 
-  // Export JSON
   document.getElementById("export-json-btn")?.addEventListener("click", () => {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({
       settings: state.settings,
@@ -1215,7 +1214,6 @@ function attachSettingsEvents() {
     showToast("Data exported successfully!", "📥");
   });
 
-  // Import JSON
   const importInput = document.getElementById("import-file-input");
   document.getElementById("import-json-btn")?.addEventListener("click", () => {
     importInput.click();
@@ -1271,7 +1269,6 @@ function render() {
     }
   });
 
-  // Update user badge
   const userDisp = document.getElementById("sidebar-user-id");
   const emailDisp = document.getElementById("sidebar-user-email");
   const modalUid = document.getElementById("modal-uid-display");
@@ -1284,7 +1281,6 @@ function render() {
 }
 
 function setupGlobalEvents() {
-  // Gate sign-in trigger
   document.getElementById("gate-signin-btn")?.addEventListener("click", () => {
     document.getElementById("auth-modal")?.classList.add("active");
   });
@@ -1297,7 +1293,6 @@ function setupGlobalEvents() {
     });
   });
 
-  // Modal toggles
   document.getElementById("auth-modal-btn")?.addEventListener("click", () => {
     document.getElementById("auth-modal").classList.add("active");
   });
@@ -1305,7 +1300,6 @@ function setupGlobalEvents() {
     document.getElementById("auth-modal").classList.remove("active");
   });
 
-  // Delete modal actions
   document.getElementById("confirm-delete-btn")?.addEventListener("click", async () => {
     if (state.deletingTxId) {
       if (state.editingTxId === state.deletingTxId) state.editingTxId = null;
@@ -1320,7 +1314,6 @@ function setupGlobalEvents() {
     document.getElementById("delete-modal").classList.remove("active");
   });
 
-  // Google Sign-In
   document.getElementById("google-signin-btn")?.addEventListener("click", async () => {
     try {
       const provider = new GoogleAuthProvider();
@@ -1331,7 +1324,6 @@ function setupGlobalEvents() {
     }
   });
 
-  // Email Sign-In Form
   document.getElementById("email-auth-form")?.addEventListener("submit", async (e) => {
     e.preventDefault();
     const email = document.getElementById("auth-email").value;
@@ -1344,7 +1336,6 @@ function setupGlobalEvents() {
     }
   });
 
-  // Email Sign-Up Button
   document.getElementById("email-signup-btn")?.addEventListener("click", async () => {
     const email = document.getElementById("auth-email").value;
     const password = document.getElementById("auth-password").value;
@@ -1356,7 +1347,6 @@ function setupGlobalEvents() {
     }
   });
 
-  // Sign Out Button
   document.getElementById("sign-out-btn")?.addEventListener("click", async () => {
     if (firebaseAuthInstance) {
       await signOut(firebaseAuthInstance);
