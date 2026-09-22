@@ -1,0 +1,1642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Money Flow - Personal Expense Tracker</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..800;1,9..144,300..800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <style>
+    :root {
+      --bg: #F7F5EF;
+      --panel: #FFFFFF;
+      --ink: #1E2A32;
+      --ink-soft: #5B6670;
+      --line: #E4E0D6;
+      --savings: #2F7A5D;
+      --savings-soft: #E4EFE9;
+      --commit: #B8823C;
+      --expense: #B04A4A;
+      --sbi: #2F5D8A;
+      --indus: #7A4E8C;
+    }
+
+    * { box-sizing: border-box; }
+    
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #EFECE6;
+      font-family: 'Inter', sans-serif;
+      color: var(--ink);
+      min-height: 100vh;
+    }
+
+    #ft-root {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      width: 100%;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    @media (min-width: 768px) {
+      #ft-root {
+        flex-direction: row;
+        min-height: 100vh;
+      }
+    }
+
+    #ft-root h1, #ft-root h2, #ft-root h3 {
+      font-family: 'Fraunces', serif;
+      color: var(--ink);
+      margin: 0;
+      font-weight: 500;
+    }
+
+    #ft-root .muted { color: var(--ink-soft); }
+
+    #ft-root .sidebar {
+      background: var(--ink);
+      display: flex;
+      flex-direction: row;
+      overflow-x: auto;
+      flex-shrink: 0;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+    }
+
+    @media (min-width: 768px) {
+      #ft-root .sidebar {
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: stretch;
+        width: 260px;
+        overflow-x: visible;
+        padding: 0;
+      }
+    }
+
+    #ft-root .sidebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 8px;
+    }
+
+    @media (min-width: 768px) {
+      #ft-root .sidebar-brand {
+        padding: 24px 20px 16px;
+      }
+    }
+
+    #ft-root .sidebar-brand span {
+      color: #EDE8DA;
+      font-size: 20px;
+      font-family: 'Fraunces', serif;
+      font-weight: 600;
+    }
+
+    #ft-root .nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      color: #9AA5AC;
+      background: transparent;
+      border: none;
+      border-left: 3px solid transparent;
+      cursor: pointer;
+      white-space: nowrap;
+      text-align: left;
+      transition: all 0.2s ease;
+      user-select: none;
+      border-radius: 4px;
+    }
+
+    @media (min-width: 768px) {
+      #ft-root .nav-btn {
+        padding: 14px 20px;
+        border-radius: 0;
+      }
+    }
+
+    #ft-root .nav-btn:hover { color: #EDE8DA; background: rgba(255,255,255,0.04); }
+    #ft-root .nav-btn:active { transform: scale(0.98); }
+    #ft-root .nav-btn.active {
+      color: #F7F5EF;
+      background: rgba(255,255,255,0.08);
+      border-left-color: var(--savings);
+      font-weight: 500;
+    }
+
+    #ft-root .main {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      max-width: 1400px;
+    }
+
+    @media (min-width: 768px) {
+      #ft-root .main {
+        padding: 32px 40px;
+      }
+    }
+
+    #ft-root .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    }
+
+    #ft-root .grid { display: grid; gap: 16px; }
+    #ft-root .grid-2 { grid-template-columns: 1fr; }
+    #ft-root .grid-3 { grid-template-columns: 1fr; }
+    #ft-root .grid-4 { grid-template-columns: repeat(2, 1fr); }
+
+    @media (min-width: 768px) {
+      #ft-root .grid-2 { grid-template-columns: 1fr 1fr; }
+      #ft-root .grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+      #ft-root .grid-4 { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    #ft-root .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-soft); font-weight: 600; }
+    #ft-root .stat-value { font-family: 'Fraunces', serif; font-size: 26px; margin-top: 4px; font-weight: 600; }
+    #ft-root .stat-sub { font-size: 12px; color: var(--ink-soft); margin-top: 4px; }
+
+    #ft-root label { font-size: 12px; color: var(--ink-soft); display: block; margin-bottom: 6px; font-weight: 500; }
+    
+    #ft-root input, #ft-root select, #ft-root textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      font-size: 14px;
+      color: var(--ink);
+      background: #FAFAFA;
+      font-family: inherit;
+      transition: all 0.15s ease;
+    }
+
+    #ft-root input:focus, #ft-root select:focus, #ft-root textarea:focus {
+      outline: none;
+      border-color: var(--savings);
+      background: #FFFFFF;
+      box-shadow: 0 0 0 3px rgba(47, 122, 93, 0.15);
+    }
+
+    #ft-root .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 8px;
+      border: none;
+      background: var(--savings);
+      color: #ffffff;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      user-select: none;
+      box-shadow: 0 2px 4px rgba(47, 122, 93, 0.2);
+    }
+
+    #ft-root .btn:hover { opacity: 0.95; filter: brightness(1.05); transform: translateY(-1px); }
+    #ft-root .btn:active { transform: translateY(0) scale(0.98); }
+    
+    #ft-root .btn-secondary {
+      background: var(--line);
+      color: var(--ink);
+      box-shadow: none;
+    }
+    #ft-root .btn-secondary:hover { background: #D8D3C5; }
+
+    #ft-root .btn-outline {
+      background: transparent;
+      border: 1px solid var(--line);
+      color: var(--ink);
+      box-shadow: none;
+    }
+    #ft-root .btn-outline:hover { background: #FAF8F5; border-color: var(--ink-soft); }
+
+    #ft-root .icon-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 6px 8px;
+      color: var(--ink-soft);
+      font-size: 15px;
+      line-height: 1;
+      border-radius: 6px;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+    #ft-root .icon-btn:hover {
+      color: var(--ink);
+      background: rgba(0, 0, 0, 0.05);
+    }
+    #ft-root .icon-btn.danger:hover {
+      color: var(--expense);
+      background: rgba(176, 74, 74, 0.12);
+    }
+
+    #ft-root table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    #ft-root th { text-align: left; padding: 12px 14px; font-weight: 500; color: var(--ink-soft); border-bottom: 1px solid var(--line); background: #FAF8F5; }
+    #ft-root td { padding: 12px 14px; border-bottom: 1px solid var(--line); color: var(--ink); }
+    #ft-root tr:last-child td { border-bottom: none; }
+    #ft-root .bar-wrap { width: 100%; height: 28px; border-radius: 8px; overflow: hidden; display: flex; border: 1px solid var(--line); background: #EFECE6; }
+    #ft-root .swatch { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+    #ft-root .row-flex { display: flex; justify-content: space-between; font-size: 14px; padding: 8px 0; }
+    #ft-root .divider { height: 1px; background: var(--line); margin: 12px 0; }
+    #ft-root .empty { text-align: center; color: var(--ink-soft); padding: 36px; font-size: 14px; }
+
+    /* Custom Toast Notification UI */
+    #ft-toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--ink);
+      color: #FFF;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    #ft-toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* Modal Backdrop */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(30, 42, 50, 0.6);
+      backdrop-filter: blur(4px);
+      z-index: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .modal-backdrop.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+  </style>
+</head>
+<body>
+
+<div id="ft-root">
+  <!-- Sidebar Navigation -->
+  <div class="sidebar">
+    <div>
+      <div class="sidebar-brand">
+        <span>💰</span>
+        <span>Money Flow</span>
+      </div>
+      
+      <!-- Cloud/Local Sync Mode Badge -->
+      <div id="sync-status-badge" class="px-3 py-2 mx-2 md:mx-4 mb-2 md:mb-4 rounded-lg bg-black/30 border border-white/10 text-xs flex items-center justify-between text-gray-200">
+        <span class="flex items-center gap-2">
+          <span id="sync-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+          <span id="sync-text" class="font-medium">Local Storage</span>
+        </span>
+        <button id="auth-modal-btn" class="text-[11px] bg-white/10 px-2 py-0.5 rounded hover:bg-white/20 text-white transition-colors" title="Manage Auth & Cloud Setup">
+          Config / Auth
+        </button>
+      </div>
+    </div>
+
+    <!-- Nav Buttons -->
+    <div class="flex md:flex-col overflow-x-auto w-full">
+      <button class="nav-btn active" data-tab="dashboard">▦ Dashboard</button>
+      <button class="nav-btn" data-tab="transactions">☰ Transactions</button>
+      <button class="nav-btn" data-tab="accounts">🏦 Accounts</button>
+      <button class="nav-btn" data-tab="monthly">📅 Monthly summary</button>
+      <button class="nav-btn" data-tab="settings">⚙ Settings</button>
+    </div>
+
+    <!-- Sidebar User Footer -->
+    <div class="hidden md:block mt-auto p-4 border-t border-white/10 text-xs text-gray-400">
+      <div class="font-medium text-gray-200 truncate" id="sidebar-user-id">Local Offline Mode</div>
+      <div class="text-[10px] opacity-75 truncate" id="sidebar-user-email">Data saved in browser</div>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <div class="main" id="ft-main">
+    <div class="flex items-center justify-center h-64 text-gray-500">
+      <div class="text-center">
+        <div class="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-300 border-t-emerald-600 mb-3"></div>
+        <p>Loading Money Flow dashboard…</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Notification Toast -->
+<div id="ft-toast">
+  <span id="toast-icon">ℹ️</span>
+  <span id="toast-msg">Notification</span>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="delete-modal" class="modal-backdrop">
+  <div class="bg-white rounded-xl max-w-sm w-full p-6 shadow-2xl border border-gray-200">
+    <h3 class="text-lg font-serif font-medium text-gray-900 mb-2">Delete Transaction?</h3>
+    <p class="text-sm text-gray-600 mb-6">Are you sure you want to remove this record? This action will update your account balances instantly.</p>
+    <div class="flex justify-end gap-3">
+      <button id="confirm-delete-cancel" class="px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium hover:bg-gray-50">Cancel</button>
+      <button id="confirm-delete-btn" class="px-4 py-2 rounded-lg bg-rose-600 text-white text-sm font-medium hover:bg-rose-700">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- Auth & Cloud Config Modal -->
+<div id="auth-modal" class="modal-backdrop">
+  <div class="bg-white rounded-xl max-w-lg w-full p-6 shadow-2xl border border-gray-200 max-h-[90vh] overflow-y-auto">
+    <div class="flex justify-between items-center mb-4">
+      <div>
+        <h3 class="text-xl font-serif font-semibold text-gray-900">Cloud Sync & Firebase Config</h3>
+        <p class="text-xs text-gray-500">Configure your project keys or sign in for real-time sync</p>
+      </div>
+      <button id="auth-modal-close" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">&times;</button>
+    </div>
+
+    <!-- Mode Banner inside Modal -->
+    <div id="modal-status-banner" class="mb-4 p-3 rounded-lg text-xs flex items-center justify-between border bg-slate-50 border-slate-200 text-slate-700">
+      <span id="modal-status-text"><strong>Current Status:</strong> Running in Local Mode (Offline).</span>
+    </div>
+
+    <!-- Tabs inside Modal -->
+    <div class="flex border-b border-gray-200 mb-4 text-sm font-medium">
+      <button id="modal-tab-config-btn" class="py-2 px-4 border-b-2 border-emerald-600 text-emerald-700 font-semibold focus:outline-none">⚙️ Firebase Keys Setup</button>
+      <button id="modal-tab-auth-btn" class="py-2 px-4 border-b-2 border-transparent text-gray-500 hover:text-gray-700 focus:outline-none">👤 User Account Sign In</button>
+    </div>
+
+    <!-- TAB 1: Firebase Configuration -->
+    <div id="modal-tab-config" class="space-y-4">
+      <div class="bg-amber-50 border border-amber-200 text-amber-900 rounded-lg p-3 text-xs leading-relaxed">
+        <strong>💡 Note on Firebase Setup:</strong><br/>
+        Money Flow works 100% offline in Local Mode out of the box! If you want cross-device sync, paste your standard Firebase project config below (from Firebase Console &gt; Project Settings).
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-gray-700 mb-1">Paste Firebase Config JSON Object</label>
+        <textarea id="cfg-json-input" rows="4" placeholder='{
+  "apiKey": "AIzaSy...",
+  "authDomain": "my-app.firebaseapp.com",
+  "projectId": "my-app-id",
+  "appId": "1:1234..."
+}' class="font-mono text-xs p-2 border rounded-lg w-full bg-slate-50 focus:bg-white"></textarea>
+      </div>
+
+      <div class="text-center text-xs text-gray-400 font-medium my-1">— OR MANUALLY FILL FIELDS —</div>
+
+      <div class="grid grid-cols-2 gap-3 text-xs">
+        <div>
+          <label class="font-medium text-gray-700">API Key</label>
+          <input type="text" id="cfg-apiKey" placeholder="AIzaSy..." class="px-2 py-1.5 border rounded" />
+        </div>
+        <div>
+          <label class="font-medium text-gray-700">Auth Domain</label>
+          <input type="text" id="cfg-authDomain" placeholder="app.firebaseapp.com" class="px-2 py-1.5 border rounded" />
+        </div>
+        <div>
+          <label class="font-medium text-gray-700">Project ID</label>
+          <input type="text" id="cfg-projectId" placeholder="my-project-id" class="px-2 py-1.5 border rounded" />
+        </div>
+        <div>
+          <label class="font-medium text-gray-700">App ID</label>
+          <input type="text" id="cfg-appId" placeholder="1:12345678:web:..." class="px-2 py-1.5 border rounded" />
+        </div>
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button id="save-cfg-btn" class="flex-1 bg-emerald-700 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-emerald-800 transition-all shadow">
+          💾 Save & Connect Firebase
+        </button>
+        <button id="clear-cfg-btn" class="bg-gray-100 text-gray-700 px-3 py-2.5 rounded-lg text-xs font-medium hover:bg-gray-200">
+          Reset Keys
+        </button>
+      </div>
+    </div>
+
+    <!-- TAB 2: Auth Sign In -->
+    <div id="modal-tab-auth" class="space-y-4 hidden">
+      <p class="text-xs text-gray-600">
+        Sign in to sync your balances and transactions across your mobile and desktop devices.
+      </p>
+
+      <button id="google-signin-btn" class="w-full py-2.5 px-4 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center justify-center gap-2">
+        <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+        Sign in with Google
+      </button>
+
+      <div class="relative my-3">
+        <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-200"></div></div>
+        <div class="relative flex justify-center text-xs uppercase"><span class="bg-white px-2 text-gray-500">Or Email Sign In</span></div>
+      </div>
+
+      <form id="email-auth-form" class="space-y-3">
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Email Address</label>
+          <input type="email" id="auth-email" placeholder="you@example.com" class="w-full px-3 py-2 border rounded-lg text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Password</label>
+          <input type="password" id="auth-password" placeholder="••••••••" class="w-full px-3 py-2 border rounded-lg text-sm" />
+        </div>
+        <div class="flex gap-2 pt-1">
+          <button type="submit" id="email-login-btn" class="flex-1 bg-slate-800 text-white py-2 rounded-lg text-sm font-medium hover:bg-slate-900">Sign In</button>
+          <button type="button" id="email-signup-btn" class="flex-1 bg-emerald-700 text-white py-2 rounded-lg text-sm font-medium hover:bg-emerald-800">Sign Up</button>
+        </div>
+      </form>
+
+      <div class="pt-3 border-t border-gray-100 flex justify-between items-center text-xs text-gray-500">
+        <span>Current User: <code class="bg-gray-100 px-1 py-0.5 rounded font-mono" id="modal-uid-display">Offline</code></span>
+        <button id="sign-out-btn" class="text-rose-600 font-medium hover:underline">Sign Out</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { 
+  getAuth, 
+  signInAnonymously, 
+  signInWithPopup, 
+  GoogleAuthProvider, 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signOut, 
+  onAuthStateChanged 
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { 
+  getFirestore, 
+  doc, 
+  setDoc, 
+  onSnapshot, 
+  collection, 
+  addDoc, 
+  updateDoc, 
+  deleteDoc 
+} from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+// Application Constants
+const APP_ID = typeof __app_id !== 'undefined' ? __app_id : 'money-flow-prod';
+const STORAGE_KEY = 'money_flow_app_data_v3';
+const FIREBASE_CFG_KEY = 'money_flow_firebase_config_v3';
+
+const ACCOUNTS = ["SBI", "INDUS"];
+const TYPES = ["Expense", "Income", "Transfer"];
+const CATEGORIES = ["Food", "Groceries", "Rides", "Shopping", "Bills", "Rent", "Recharge", "Family", "Personal", "Entertainment", "Commitment", "Other"];
+
+const CAT_COLORS = {
+  Food: '#E07A5F',
+  Groceries: '#2A9D8F',
+  Rides: '#3D405B',
+  Shopping: '#81B29A',
+  Bills: '#F2CC8F',
+  Rent: '#D90429',
+  Recharge: '#00B4D8',
+  Family: '#7209B7',
+  Personal: '#4361EE',
+  Entertainment: '#F72585',
+  Commitment: '#B8823C',
+  Other: '#6C757D'
+};
+
+const defaultSettings = {
+  sbiStart: 15000,
+  indusStart: 25000,
+};
+
+const initialDemoTransactions = [
+  {
+    id: "tx_demo_1",
+    date: new Date().toISOString().slice(0, 10),
+    account: "SBI",
+    type: "Expense",
+    category: "Groceries",
+    amount: 1450,
+    description: "Weekly Organic Market Shopping",
+    notes: "Vegetables & Essentials",
+    toAccount: null,
+    month: new Date().toISOString().slice(0, 7)
+  },
+  {
+    id: "tx_demo_2",
+    date: new Date().toISOString().slice(0, 10),
+    account: "INDUS",
+    type: "Income",
+    category: "Other",
+    amount: 45000,
+    description: "Monthly Salary / Income",
+    notes: "Direct Deposit",
+    toAccount: null,
+    month: new Date().toISOString().slice(0, 7)
+  },
+  {
+    id: "tx_demo_3",
+    date: new Date().toISOString().slice(0, 10),
+    account: "INDUS",
+    type: "Transfer",
+    category: "Other",
+    amount: 10000,
+    description: "Transfer to SBI for Savings",
+    notes: "Internal Transfer",
+    toAccount: "SBI",
+    month: new Date().toISOString().slice(0, 7)
+  }
+];
+
+let state = {
+  user: null,
+  userId: null,
+  settings: { ...defaultSettings },
+  transactions: [],
+  tab: "dashboard",
+  editingTxId: null,
+  deletingTxId: null,
+  filterAccount: "ALL",
+  filterCategory: "ALL",
+  filterType: "ALL",
+  sortBy: "date-desc",
+  
+  // Cloud Mode state
+  isCloudActive: false,
+  cloudErrorMsg: "",
+  fbConfig: null
+};
+
+let settingsDraft = null;
+let unsubSettings = null;
+let unsubTx = null;
+let firebaseAppInstance = null;
+let firebaseAuthInstance = null;
+let firebaseDbInstance = null;
+
+// Utility functions
+const inr = (n) => "₹" + Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 0 });
+const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const monthKey = (d) => (d ? d.slice(0, 7) : "");
+const monthLabel = (key) => {
+  if (!key) return "";
+  const [y, m] = key.split("-");
+  return new Date(Number(y), Number(m) - 1).toLocaleString("en-IN", { month: "long", year: "numeric" });
+};
+
+function loadLocalStorage() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      state.settings = parsed.settings || { ...defaultSettings };
+      state.transactions = parsed.transactions || [...initialDemoTransactions];
+    } else {
+      state.settings = { ...defaultSettings };
+      state.transactions = [...initialDemoTransactions];
+      saveLocalStorage();
+    }
+  } catch(e) {
+    console.error("Error reading localStorage:", e);
+    state.settings = { ...defaultSettings };
+    state.transactions = [...initialDemoTransactions];
+  }
+}
+
+function saveLocalStorage() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      settings: state.settings,
+      transactions: state.transactions
+    }));
+  } catch(e) {
+    console.error("Error writing to localStorage:", e);
+  }
+}
+
+function getStoredFirebaseConfig() {
+  try {
+    const stored = localStorage.getItem(FIREBASE_CFG_KEY);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (parsed && parsed.apiKey && !parsed.apiKey.includes('Demo') && !parsed.apiKey.includes('YOUR_API_KEY')) {
+        return parsed;
+      }
+    }
+  } catch(e) {}
+
+  if (typeof __firebase_config !== 'undefined') {
+    try {
+      const injected = typeof __firebase_config === 'string' ? JSON.parse(__firebase_config) : __firebase_config;
+      if (injected && injected.apiKey && !injected.apiKey.includes('Demo') && !injected.apiKey.includes('AIzaSyDemo')) {
+        return injected;
+      }
+    } catch(e) {}
+  }
+  return null;
+}
+
+function showToast(message, icon = "✅") {
+  const toast = document.getElementById("ft-toast");
+  document.getElementById("toast-msg").textContent = message;
+  document.getElementById("toast-icon").textContent = icon;
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 3200);
+}
+
+function updateSyncStatusUI() {
+  const dot = document.getElementById("sync-dot");
+  const label = document.getElementById("sync-text");
+  const banner = document.getElementById("modal-status-text");
+
+  if (state.isCloudActive && state.user) {
+    dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse";
+    label.textContent = "Cloud Synced";
+    if (banner) banner.innerHTML = `<strong>Status:</strong> Connected to Cloud Firestore (${esc(state.user.email || 'Authenticated User')})`;
+  } else if (state.cloudErrorMsg) {
+    dot.className = "w-2.5 h-2.5 rounded-full bg-amber-400";
+    label.textContent = "Local Mode";
+    if (banner) banner.innerHTML = `<strong>Local Mode Active:</strong> ${esc(state.cloudErrorMsg)}`;
+  } else {
+    dot.className = "w-2.5 h-2.5 rounded-full bg-slate-400";
+    label.textContent = "Local Mode";
+    if (banner) banner.innerHTML = `<strong>Status:</strong> Running smoothly in Local Storage Mode (Offline).`;
+  }
+}
+
+function computeAccountBalances(settings, transactions) {
+  const bal = { SBI: Number(settings.sbiStart) || 0, INDUS: Number(settings.indusStart) || 0 };
+  transactions.forEach((t) => {
+    const amt = Number(t.amount) || 0;
+    if (t.type === "Income") bal[t.account] = (bal[t.account] || 0) + amt;
+    else if (t.type === "Expense") bal[t.account] = (bal[t.account] || 0) - amt;
+    else if (t.type === "Transfer") {
+      bal[t.account] = (bal[t.account] || 0) - amt;
+      if (t.toAccount) bal[t.toAccount] = (bal[t.toAccount] || 0) + amt;
+    }
+  });
+  return bal;
+}
+
+function computeMonthly(transactions) {
+  const months = {};
+  transactions.forEach((t) => {
+    const mk = monthKey(t.date);
+    if (!mk) return;
+    if (!months[mk]) months[mk] = { income: 0, expense: 0, commitment: 0, byCategory: {}, sbiSpend: 0, indusSpend: 0 };
+    const amt = Number(t.amount) || 0;
+    const m = months[mk];
+    if (t.type === "Income") m.income += amt;
+    if (t.type === "Expense") {
+      if (t.category === "Commitment") m.commitment += amt;
+      else m.expense += amt;
+      m.byCategory[t.category] = (m.byCategory[t.category] || 0) + amt;
+      if (t.account === "SBI") m.sbiSpend += amt;
+      if (t.account === "INDUS") m.indusSpend += amt;
+    }
+  });
+  return months;
+}
+
+async function setupFirebaseInstance(config) {
+  if (unsubSettings) unsubSettings();
+  if (unsubTx) unsubTx();
+
+  if (!config || !config.apiKey || config.apiKey.includes('Demo') || config.apiKey.includes('YOUR_API_KEY')) {
+    state.isCloudActive = false;
+    state.cloudErrorMsg = "No valid custom Firebase API Key found. Operating in Local Mode.";
+    updateSyncStatusUI();
+    return false;
+  }
+
+  try {
+    if (firebaseAppInstance) {
+      await deleteApp(firebaseAppInstance);
+    }
+    firebaseAppInstance = initializeApp(config);
+    firebaseAuthInstance = getAuth(firebaseAppInstance);
+    firebaseDbInstance = getFirestore(firebaseAppInstance);
+
+    // Attach Auth state change listener
+    onAuthStateChanged(firebaseAuthInstance, (user) => {
+      if (user) {
+        state.user = user;
+        state.userId = user.uid;
+        state.isCloudActive = true;
+        state.cloudErrorMsg = "";
+        attachFirestoreRealtimeListeners(user.uid);
+      } else {
+        // Try anonymous login for user
+        signInAnonymously(firebaseAuthInstance).catch((authErr) => {
+          console.warn("Firebase Auth Error:", authErr);
+          state.isCloudActive = false;
+          state.cloudErrorMsg = authErr.message || "Firebase auth failed. Reverting to Local Mode.";
+          updateSyncStatusUI();
+        });
+      }
+      updateSyncStatusUI();
+      render();
+    });
+
+    return true;
+  } catch (err) {
+    console.warn("Graceful Firebase Initialization Fallback:", err);
+    state.isCloudActive = false;
+    state.cloudErrorMsg = err.message || "Failed to initialize Firebase credentials.";
+    updateSyncStatusUI();
+    return false;
+  }
+}
+
+function attachFirestoreRealtimeListeners(userId) {
+  if (!firebaseDbInstance || !userId) return;
+
+  const settingsDocRef = doc(firebaseDbInstance, 'artifacts', APP_ID, 'users', userId, 'settings', 'userSettings');
+  unsubSettings = onSnapshot(settingsDocRef, (docSnap) => {
+    if (docSnap.exists()) {
+      state.settings = { ...defaultSettings, ...docSnap.data() };
+      saveLocalStorage();
+      render();
+    } else {
+      setDoc(settingsDocRef, state.settings).catch(console.error);
+    }
+  }, (err) => {
+    console.warn("Firestore settings error:", err);
+  });
+
+  const txColRef = collection(firebaseDbInstance, 'artifacts', APP_ID, 'users', userId, 'transactions');
+  unsubTx = onSnapshot(txColRef, (querySnap) => {
+    const txs = [];
+    querySnap.forEach((docSnap) => {
+      txs.push({ id: docSnap.id, ...docSnap.data() });
+    });
+    if (txs.length > 0) {
+      state.transactions = txs;
+      saveLocalStorage();
+      render();
+    }
+  }, (err) => {
+    console.warn("Firestore transactions error:", err);
+  });
+}
+
+// Data persistence wrappers (Cloud + Local Fallback)
+async function saveSettings(nextSettings) {
+  state.settings = nextSettings;
+  saveLocalStorage();
+
+  if (state.isCloudActive && firebaseDbInstance && state.userId) {
+    try {
+      const settingsDocRef = doc(firebaseDbInstance, 'artifacts', APP_ID, 'users', state.userId, 'settings', 'userSettings');
+      await setDoc(settingsDocRef, nextSettings, { merge: true });
+      showToast("Saved settings to Cloud & Local!", "💾");
+    } catch(e) {
+      showToast("Saved to Local Storage", "💾");
+    }
+  } else {
+    showToast("Settings saved locally!", "💾");
+  }
+}
+
+async function addTransaction(txn) {
+  if (!txn.id) txn.id = 'tx_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
+  state.transactions.unshift(txn);
+  saveLocalStorage();
+
+  if (state.isCloudActive && firebaseDbInstance && state.userId) {
+    try {
+      const txColRef = collection(firebaseDbInstance, 'artifacts', APP_ID, 'users', state.userId, 'transactions');
+      await addDoc(txColRef, { ...txn, createdAt: new Date().toISOString() });
+      showToast("Added transaction to Cloud & Local!", "➕");
+    } catch(e) {
+      showToast("Added transaction locally", "➕");
+    }
+  } else {
+    showToast("Transaction saved locally!", "➕");
+  }
+  render();
+}
+
+async function updateTransaction(txId, txnData) {
+  const idx = state.transactions.findIndex(t => t.id === txId);
+  if (idx !== -1) {
+    state.transactions[idx] = { ...state.transactions[idx], ...txnData };
+    saveLocalStorage();
+  }
+
+  if (state.isCloudActive && firebaseDbInstance && state.userId) {
+    try {
+      const txDocRef = doc(firebaseDbInstance, 'artifacts', APP_ID, 'users', state.userId, 'transactions', txId);
+      await updateDoc(txDocRef, txnData);
+      showToast("Updated transaction on Cloud!", "✏️");
+    } catch(e) {
+      showToast("Updated transaction locally", "✏️");
+    }
+  } else {
+    showToast("Transaction updated locally!", "✏️");
+  }
+  render();
+}
+
+async function deleteTransaction(txId) {
+  state.transactions = state.transactions.filter(t => t.id !== txId);
+  saveLocalStorage();
+
+  if (state.isCloudActive && firebaseDbInstance && state.userId) {
+    try {
+      const txDocRef = doc(firebaseDbInstance, 'artifacts', APP_ID, 'users', state.userId, 'transactions', txId);
+      await deleteDoc(txDocRef);
+      showToast("Deleted from Cloud & Local", "🗑️");
+    } catch(e) {
+      showToast("Deleted transaction locally", "🗑️");
+    }
+  } else {
+    showToast("Transaction deleted locally", "🗑️");
+  }
+  render();
+}
+
+function renderDashboard() {
+  const { settings, transactions } = state;
+  const balances = computeAccountBalances(settings, transactions);
+  const totalBalance = (balances.SBI || 0) + (balances.INDUS || 0);
+  const currentMonthKey = new Date().toISOString().slice(0, 7);
+  const monthly = computeMonthly(transactions);
+  const thisMonth = monthly[currentMonthKey] || { income: 0, expense: 0, commitment: 0, byCategory: {} };
+  const net = thisMonth.income - thisMonth.expense - thisMonth.commitment;
+  const totalSpent = thisMonth.expense + thisMonth.commitment;
+
+  const categorySpends = Object.entries(thisMonth.byCategory || {})
+    .map(([cat, amt]) => ({ category: cat, amount: amt }))
+    .filter((item) => item.amount > 0)
+    .sort((a, b) => b.amount - a.amount);
+
+  return `
+    <div>
+      <h1 style="font-size:24px;">This month, at a glance</h1>
+      <p class="muted" style="font-size:14px; margin-top:4px;">${esc(monthLabel(currentMonthKey))}</p>
+    </div>
+
+    <!-- Quick Stat Cards -->
+    <div class="grid grid-4" style="margin-top:24px;">
+      <div class="card"><div class="stat-label">SBI balance</div><div class="stat-value" style="color:var(--sbi)">${inr(balances.SBI)}</div></div>
+      <div class="card"><div class="stat-label">INDUS balance</div><div class="stat-value" style="color:var(--indus)">${inr(balances.INDUS)}</div></div>
+      <div class="card"><div class="stat-label">Total across accounts</div><div class="stat-value">${inr(totalBalance)}</div></div>
+      <div class="card">
+        <div class="stat-label">Net Monthly Logged</div>
+        <div class="stat-value" style="color:${net >= 0 ? "var(--savings)" : "var(--expense)"}">${inr(net)}</div>
+        <div class="stat-sub">income − expenses − commitments</div>
+      </div>
+    </div>
+
+    <!-- Category Spending Visualizer -->
+    <div class="card" style="margin-top:24px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:8px;">
+        <div>
+          <h2 style="font-size:18px;">Where your money went this month</h2>
+          <p class="muted" style="font-size:13px; margin-top:2px;">Category-wise breakdown of logged spending (${inr(totalSpent)})</p>
+        </div>
+      </div>
+
+      ${categorySpends.length === 0 ? `
+        <div class="empty" style="padding: 24px 0;">No expenses logged for ${esc(monthLabel(currentMonthKey))} yet. Add transactions to view visual spending analytics.</div>
+      ` : `
+        <!-- Stacked Bar Visual -->
+        <div class="bar-wrap" style="margin-bottom:24px;">
+          ${categorySpends.map((item) => {
+            const pct = totalSpent > 0 ? ((item.amount / totalSpent) * 100).toFixed(1) : 0;
+            const color = CAT_COLORS[item.category] || '#6C757D';
+            return `<div style="width:${pct}%; background:${color}; transition: width 0.3s;" title="${esc(item.category)}: ${inr(item.amount)} (${pct}%)"></div>`;
+          }).join("")}
+        </div>
+
+        <!-- Progress List -->
+        <div style="display:flex; flex-direction:column; gap:14px;">
+          ${categorySpends.map((item) => {
+            const pct = totalSpent > 0 ? Math.round((item.amount / totalSpent) * 100) : 0;
+            const color = CAT_COLORS[item.category] || '#6C757D';
+            return `
+              <div>
+                <div style="display:flex; justify-content:space-between; font-size:13px; margin-bottom:6px;">
+                  <span style="display:flex; align-items:center; gap:8px;">
+                    <span class="swatch" style="background:${color};"></span>
+                    <strong style="color:var(--ink)">${esc(item.category)}</strong>
+                  </span>
+                  <span><strong>${inr(item.amount)}</strong> <span class="muted">(${pct}%)</span></span>
+                </div>
+                <div style="width:100%; height:8px; background:#E4E0D6; border-radius:4px; overflow:hidden;">
+                  <div style="width:${pct}%; height:100%; background:${color}; border-radius:4px; transition: width 0.3s;"></div>
+                </div>
+              </div>
+            `;
+          }).join("")}
+        </div>
+      `}
+    </div>
+  `;
+}
+
+function renderTransactions() {
+  const { transactions, editingTxId, filterAccount, filterCategory, filterType, sortBy } = state;
+  const editingTx = editingTxId ? transactions.find(t => t.id === editingTxId) : null;
+
+  // Filter in memory
+  let filtered = transactions.filter(t => {
+    if (filterAccount !== "ALL" && t.account !== filterAccount && t.toAccount !== filterAccount) return false;
+    if (filterCategory !== "ALL" && t.category !== filterCategory) return false;
+    if (filterType !== "ALL" && t.type !== filterType) return false;
+    return true;
+  });
+
+  // Sort in memory
+  filtered.sort((a, b) => {
+    if (sortBy === "date-desc") return (b.date || "").localeCompare(a.date || "");
+    if (sortBy === "date-asc") return (a.date || "").localeCompare(b.date || "");
+    if (sortBy === "amount-desc") return (Number(b.amount) || 0) - (Number(a.amount) || 0);
+    if (sortBy === "amount-asc") return (Number(a.amount) || 0) - (Number(b.amount) || 0);
+    return 0;
+  });
+
+  const defaultDate = editingTx ? editingTx.date : new Date().toISOString().slice(0,10);
+  const defaultAccount = editingTx ? editingTx.account : ACCOUNTS[0];
+  const defaultType = editingTx ? editingTx.type : "Expense";
+  const defaultCategory = editingTx ? editingTx.category : CATEGORIES[0];
+  const defaultToAccount = editingTx ? (editingTx.toAccount || ACCOUNTS[1]) : ACCOUNTS[1];
+  const defaultAmount = editingTx ? editingTx.amount : "";
+  const defaultDesc = editingTx ? editingTx.description : "";
+  const defaultNotes = editingTx ? editingTx.notes : "";
+
+  return `
+    <h1 style="font-size:24px;">Transactions</h1>
+
+    <!-- Form Card -->
+    <div class="card" style="margin-top:20px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h3 style="font-size:16px;">${editingTx ? "Edit transaction" : "Add a transaction"}</h3>
+        ${editingTx ? `<span class="muted" style="font-size:12px;">Editing ID: ${esc(editingTx.id.slice(0, 8))}...</span>` : ""}
+      </div>
+      
+      <div class="grid grid-3">
+        <div><label>Date</label><input type="date" id="tx-date" value="${esc(defaultDate)}" /></div>
+        <div>
+          <label>Account</label>
+          <select id="tx-account">
+            ${ACCOUNTS.map((a) => `<option value="${a}" ${a === defaultAccount ? "selected" : ""}>${a}</option>`).join("")}
+          </select>
+        </div>
+        <div>
+          <label>Type</label>
+          <select id="tx-type">
+            ${TYPES.map((t) => `<option value="${t}" ${t === defaultType ? "selected" : ""}>${t}</option>`).join("")}
+          </select>
+        </div>
+        <div id="tx-category-wrap">
+          <label>Category</label>
+          <select id="tx-category">
+            ${CATEGORIES.map((c) => `<option value="${c}" ${c === defaultCategory ? "selected" : ""}>${c}</option>`).join("")}
+          </select>
+        </div>
+        <div id="tx-toaccount-wrap" style="display:none;">
+          <label>To account</label>
+          <select id="tx-toaccount">
+            ${ACCOUNTS.map((a) => `<option value="${a}" ${a === defaultToAccount ? "selected" : ""}>${a}</option>`).join("")}
+          </select>
+        </div>
+        <div><label>Amount (₹)</label><input type="number" id="tx-amount" placeholder="0" value="${esc(defaultAmount)}" /></div>
+        <div style="grid-column: span 2;"><label>Description</label><input id="tx-desc" placeholder="e.g. Lunch with friends" value="${esc(defaultDesc)}" /></div>
+        <div style="grid-column: 1 / -1;"><label>Notes</label><input id="tx-notes" placeholder="optional notes" value="${esc(defaultNotes)}" /></div>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top:16px;">
+        <button class="btn" id="tx-save-btn">${editingTx ? "✓ Save changes" : "+ Add transaction"}</button>
+        ${editingTx ? `<button class="btn btn-secondary" id="tx-cancel-btn">Cancel</button>` : ""}
+      </div>
+    </div>
+
+    <!-- Filters & Sorting Bar -->
+    <div class="card" style="margin-top:20px;">
+      <h3 style="font-size:15px; margin-bottom:12px;">Filters & Sorting</h3>
+      <div class="grid grid-4">
+        <div>
+          <label>Filter Account</label>
+          <select id="filter-account">
+            <option value="ALL" ${filterAccount === "ALL" ? "selected" : ""}>All Accounts</option>
+            ${ACCOUNTS.map(a => `<option value="${a}" ${filterAccount === a ? "selected" : ""}>${a}</option>`).join("")}
+          </select>
+        </div>
+        <div>
+          <label>Filter Category</label>
+          <select id="filter-category">
+            <option value="ALL" ${filterCategory === "ALL" ? "selected" : ""}>All Categories</option>
+            ${CATEGORIES.map(c => `<option value="${c}" ${filterCategory === c ? "selected" : ""}>${c}</option>`).join("")}
+          </select>
+        </div>
+        <div>
+          <label>Filter Type</label>
+          <select id="filter-type">
+            <option value="ALL" ${filterType === "ALL" ? "selected" : ""}>All Types</option>
+            ${TYPES.map(t => `<option value="${t}" ${filterType === t ? "selected" : ""}>${t}</option>`).join("")}
+          </select>
+        </div>
+        <div>
+          <label>Sort By</label>
+          <select id="filter-sort">
+            <option value="date-desc" ${sortBy === "date-desc" ? "selected" : ""}>Date: Newest First</option>
+            <option value="date-asc" ${sortBy === "date-asc" ? "selected" : ""}>Date: Oldest First</option>
+            <option value="amount-desc" ${sortBy === "amount-desc" ? "selected" : ""}>Amount: High to Low</option>
+            <option value="amount-asc" ${sortBy === "amount-asc" ? "selected" : ""}>Amount: Low to High</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transactions Table -->
+    <div class="card" style="margin-top:20px; padding:0;">
+      <div style="overflow-x:auto;">
+        <table>
+          <thead><tr><th>Date</th><th>Account</th><th>Description</th><th>Category</th><th>Type</th><th>Amount</th><th>Notes</th><th>Actions</th></tr></thead>
+          <tbody>
+            ${filtered.length === 0 ? `<tr><td colspan="8" class="empty">No transactions found matching your filter criteria.</td></tr>` :
+              filtered.map((t) => `
+                <tr style="${editingTxId === t.id ? "background: #F7F5EF;" : ""}">
+                  <td>${esc(t.date)}</td>
+                  <td style="color:${t.account === "SBI" ? "var(--sbi)" : "var(--indus)"}">${esc(t.account)}${t.type === "Transfer" ? ` → ${esc(t.toAccount)}` : ""}</td>
+                  <td>${esc(t.description)}</td>
+                  <td class="muted">${esc(t.category)}</td>
+                  <td class="muted">${esc(t.type)}</td>
+                  <td style="color:${t.type === "Income" ? "var(--savings)" : t.type === "Expense" ? "var(--expense)" : "var(--ink)"}">${t.type === "Income" ? "+" : t.type === "Expense" ? "−" : ""}${inr(t.amount)}</td>
+                  <td class="muted">${esc(t.notes)}</td>
+                  <td style="white-space:nowrap;">
+                    <button class="icon-btn" data-edit-tx="${t.id}" title="Edit transaction">✏️</button>
+                    <button class="icon-btn danger" data-delete-tx="${t.id}" title="Delete transaction">🗑</button>
+                  </td>
+                </tr>
+              `).join("")}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+function renderAccounts() {
+  const { settings, transactions } = state;
+  function compute(acct) {
+    const start = Number(acct === "SBI" ? settings.sbiStart : settings.indusStart) || 0;
+    let income = 0, expense = 0, transferOut = 0, transferIn = 0;
+    transactions.forEach((t) => {
+      const amt = Number(t.amount) || 0;
+      if (t.account === acct) {
+        if (t.type === "Income") income += amt;
+        if (t.type === "Expense") expense += amt;
+        if (t.type === "Transfer") transferOut += amt;
+      }
+      if (t.type === "Transfer" && t.toAccount === acct) transferIn += amt;
+    });
+    return { start, income, expense, transferOut, transferIn, current: start + income - expense - transferOut + transferIn };
+  }
+
+  return `
+    <h1 style="font-size:24px;">Accounts Balance Breakdown</h1>
+    <div class="grid grid-2" style="margin-top:20px;">
+      ${ACCOUNTS.map((acct) => {
+        const c = compute(acct);
+        const accent = acct === "SBI" ? "var(--sbi)" : "var(--indus)";
+        return `
+          <div class="card">
+            <h3 style="font-size:18px; margin-bottom:16px;">${acct} Account</h3>
+            <div class="row-flex"><span class="muted">Opening balance</span><span>${inr(c.start)}</span></div>
+            <div class="row-flex"><span class="muted">Total Income</span><span style="color:var(--savings)">+${inr(c.income)}</span></div>
+            <div class="row-flex"><span class="muted">Total Expenses</span><span style="color:var(--expense)">−${inr(c.expense)}</span></div>
+            <div class="row-flex"><span class="muted">Transfers out</span><span style="color:var(--expense)">−${inr(c.transferOut)}</span></div>
+            <div class="row-flex"><span class="muted">Transfers in</span><span style="color:var(--savings)">+${inr(c.transferIn)}</span></div>
+            <div class="divider"></div>
+            <div class="row-flex" style="font-size:16px;"><span>Calculated Balance</span><span style="font-family:'Fraunces',serif; color:${accent}">${inr(c.current)}</span></div>
+          </div>
+        `;
+      }).join("")}
+    </div>
+  `;
+}
+
+function renderMonthly() {
+  const monthly = computeMonthly(state.transactions);
+  const keys = Object.keys(monthly).sort().reverse();
+  return `
+    <h1 style="font-size:24px;">Monthly summary</h1>
+    <div style="margin-top:20px; display:flex; flex-direction:column; gap:16px;">
+      ${keys.length === 0 ? `<div class="card"><p class="muted" style="font-size:14px;">Log some transactions to see monthly summaries appear here.</p></div>` :
+        keys.map((k) => {
+          const m = monthly[k];
+          const netSavings = m.income - m.expense - m.commitment;
+          const savingsPct = m.income > 0 ? ((netSavings / m.income) * 100).toFixed(1) : "0";
+          const topCategory = Object.entries(m.byCategory).sort((a, b) => b[1] - a[1])[0];
+          return `
+            <div class="card">
+              <h3 style="font-size:18px; margin-bottom:16px;">${esc(monthLabel(k))}</h3>
+              <div class="grid grid-4">
+                <div><div class="muted" style="font-size:13px;">Logged income</div><div style="font-size:18px; margin-top:4px; color:var(--savings)">${inr(m.income)}</div></div>
+                <div><div class="muted" style="font-size:13px;">Regular expenses</div><div style="font-size:18px; margin-top:4px; color:var(--expense)">${inr(m.expense)}</div></div>
+                <div><div class="muted" style="font-size:13px;">Committed / pass-through</div><div style="font-size:18px; margin-top:4px; color:var(--commit)">${inr(m.commitment)}</div></div>
+                <div><div class="muted" style="font-size:13px;">Net savings</div><div style="font-size:18px; margin-top:4px; color:${netSavings >= 0 ? "var(--savings)" : "var(--expense)"}">${inr(netSavings)}</div></div>
+              </div>
+              <div style="margin-top:16px; font-size:12px; display:flex; gap:16px; flex-wrap:wrap;">
+                <span class="muted">Savings rate: <strong style="color:var(--ink)">${savingsPct}%</strong></span>
+                <span class="muted">SBI spend: <strong style="color:var(--ink)">${inr(m.sbiSpend)}</strong></span>
+                <span class="muted">INDUS spend: <strong style="color:var(--ink)">${inr(m.indusSpend)}</strong></span>
+                ${topCategory ? `<span class="muted">Top category: <strong style="color:var(--ink)">${esc(topCategory[0])} (${inr(topCategory[1])})</strong></span>` : ""}
+              </div>
+            </div>
+          `;
+        }).join("")}
+    </div>
+  `;
+}
+
+function renderSettings() {
+  settingsDraft = JSON.parse(JSON.stringify(state.settings));
+  const savedCfg = getStoredFirebaseConfig();
+
+  return `
+    <h1 style="font-size:24px;">Settings & Preferences</h1>
+
+    <!-- Starting Balances -->
+    <div class="card" style="margin-top:20px;">
+      <h3 style="font-size:16px; margin-bottom:16px;">Core Opening Account Balances</h3>
+      <div class="grid grid-2">
+        <div><label>SBI Starting Balance (₹)</label><input type="number" id="set-sbistart" value="${settingsDraft.sbiStart}" /></div>
+        <div><label>INDUS Starting Balance (₹)</label><input type="number" id="set-indusstart" value="${settingsDraft.indusStart}" /></div>
+      </div>
+      <button class="btn" id="save-settings-btn" style="margin-top:20px;">Save Opening Balances</button>
+    </div>
+
+    <!-- Firebase Cloud Config Panel -->
+    <div class="card" style="margin-top:20px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3 style="font-size:16px;">Firebase Cloud Sync Configuration</h3>
+        <span class="px-2 py-0.5 rounded text-xs ${state.isCloudActive ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'}">
+          ${state.isCloudActive ? '● Cloud Connected' : '○ Local Storage Mode'}
+        </span>
+      </div>
+      <p class="muted" style="font-size:13px; margin-bottom:16px;">
+        Money Flow seamlessly works locally in your browser. To sync across your phone and laptop, enter your Firebase credentials below or open the setup modal.
+      </p>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn btn-secondary" id="open-config-modal-btn">⚙️ Configure Firebase Keys</button>
+        ${savedCfg ? `<button class="btn btn-outline" id="clear-config-settings-btn">Reset Firebase Keys</button>` : ''}
+      </div>
+    </div>
+
+    <!-- Local Data Management -->
+    <div class="card" style="margin-top:20px;">
+      <h3 style="font-size:16px; margin-bottom:8px;">Data Import & Export</h3>
+      <p class="muted" style="font-size:13px; margin-bottom:16px;">Export your complete transaction ledger to JSON or reset local cache.</p>
+      
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button class="btn btn-secondary" id="export-json-btn">📥 Export Data (JSON)</button>
+        <button class="btn btn-outline" id="import-json-btn">📤 Import Data (JSON)</button>
+        <input type="file" id="import-file-input" accept=".json" style="display:none;" />
+        <button class="btn" id="reset-all-data-btn" style="background:var(--expense);">🗑 Reset All Local Data</button>
+      </div>
+    </div>
+  `;
+}
+
+function attachTransactionsEvents() {
+  const typeSel = document.getElementById("tx-type");
+  const catWrap = document.getElementById("tx-category-wrap");
+  const toWrap = document.getElementById("tx-toaccount-wrap");
+
+  if (!typeSel) return;
+
+  function syncType() {
+    if (typeSel.value === "Transfer") {
+      catWrap.style.display = "none";
+      toWrap.style.display = "block";
+    } else {
+      catWrap.style.display = "block";
+      toWrap.style.display = "none";
+    }
+  }
+  
+  typeSel.addEventListener("change", syncType);
+  syncType();
+
+  document.getElementById("tx-save-btn")?.addEventListener("click", async () => {
+    const amount = Number(document.getElementById("tx-amount").value);
+    if (!amount || amount <= 0) {
+      showToast("Please enter a valid positive amount", "⚠️");
+      return;
+    }
+
+    const type = typeSel.value;
+    const account = document.getElementById("tx-account").value;
+    const toAccount = document.getElementById("tx-toaccount").value;
+    if (type === "Transfer" && account === toAccount) {
+      showToast("Source & Target accounts must be different", "⚠️");
+      return;
+    }
+
+    const dateVal = document.getElementById("tx-date").value;
+    const descVal = document.getElementById("tx-desc").value || (type === "Transfer" ? `Transfer to ${toAccount}` : "");
+    const catVal = type === "Transfer" ? "Other" : document.getElementById("tx-category").value;
+    const notesVal = document.getElementById("tx-notes").value;
+
+    const txnData = {
+      date: dateVal,
+      account,
+      description: descVal,
+      category: catVal,
+      type,
+      amount,
+      toAccount: type === "Transfer" ? toAccount : null,
+      month: monthKey(dateVal),
+      notes: notesVal
+    };
+
+    if (state.editingTxId) {
+      await updateTransaction(state.editingTxId, txnData);
+      state.editingTxId = null;
+    } else {
+      await addTransaction(txnData);
+    }
+  });
+
+  document.getElementById("tx-cancel-btn")?.addEventListener("click", () => {
+    state.editingTxId = null;
+    render();
+  });
+
+  document.getElementById("filter-account")?.addEventListener("change", (e) => {
+    state.filterAccount = e.target.value;
+    render();
+  });
+  document.getElementById("filter-category")?.addEventListener("change", (e) => {
+    state.filterCategory = e.target.value;
+    render();
+  });
+  document.getElementById("filter-type")?.addEventListener("change", (e) => {
+    state.filterType = e.target.value;
+    render();
+  });
+  document.getElementById("filter-sort")?.addEventListener("change", (e) => {
+    state.sortBy = e.target.value;
+    render();
+  });
+
+  document.querySelectorAll("[data-edit-tx]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      state.editingTxId = btn.getAttribute("data-edit-tx");
+      render();
+    });
+  });
+
+  document.querySelectorAll("[data-delete-tx]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      state.deletingTxId = btn.getAttribute("data-delete-tx");
+      document.getElementById("delete-modal").classList.add("active");
+    });
+  });
+}
+
+function attachSettingsEvents() {
+  const sbInput = document.getElementById("set-sbistart");
+  const indInput = document.getElementById("set-indusstart");
+
+  if (!sbInput) return;
+
+  sbInput.addEventListener("input", (e) => { settingsDraft.sbiStart = Number(e.target.value) || 0; });
+  indInput.addEventListener("input", (e) => { settingsDraft.indusStart = Number(e.target.value) || 0; });
+
+  document.getElementById("save-settings-btn")?.addEventListener("click", async () => {
+    await saveSettings(settingsDraft);
+    render();
+  });
+
+  document.getElementById("open-config-modal-btn")?.addEventListener("click", () => {
+    document.getElementById("auth-modal").classList.add("active");
+  });
+
+  document.getElementById("clear-config-settings-btn")?.addEventListener("click", () => {
+    localStorage.removeItem(FIREBASE_CFG_KEY);
+    showToast("Firebase keys cleared. Running in Local Mode.", "🧹");
+    setTimeout(() => location.reload(), 800);
+  });
+
+  // Export JSON
+  document.getElementById("export-json-btn")?.addEventListener("click", () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({
+      settings: state.settings,
+      transactions: state.transactions
+    }, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `Money_Flow_Backup_${new Date().toISOString().slice(0,10)}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+    showToast("Data exported successfully!", "📥");
+  });
+
+  // Import JSON
+  const importInput = document.getElementById("import-file-input");
+  document.getElementById("import-json-btn")?.addEventListener("click", () => {
+    importInput.click();
+  });
+
+  importInput?.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const imported = JSON.parse(evt.target.result);
+        if (imported.transactions && Array.isArray(imported.transactions)) {
+          state.transactions = imported.transactions;
+          if (imported.settings) state.settings = imported.settings;
+          saveLocalStorage();
+          showToast("Data imported successfully!", "🎉");
+          render();
+        } else {
+          showToast("Invalid backup JSON structure", "❌");
+        }
+      } catch(err) {
+        showToast("Error parsing JSON file", "❌");
+      }
+    };
+    reader.readAsText(file);
+  });
+
+  // Reset All Data
+  document.getElementById("reset-all-data-btn")?.addEventListener("click", () => {
+    if (confirm("Are you sure you want to reset all local transaction records?")) {
+      state.transactions = [];
+      state.settings = { ...defaultSettings };
+      saveLocalStorage();
+      showToast("Local data reset", "🧹");
+      render();
+    }
+  });
+}
+
+function render() {
+  const main = document.getElementById("ft-main");
+  if (!main) return;
+
+  if (state.tab === "dashboard") {
+    main.innerHTML = renderDashboard();
+  } else if (state.tab === "transactions") {
+    main.innerHTML = renderTransactions();
+    attachTransactionsEvents();
+  } else if (state.tab === "accounts") {
+    main.innerHTML = renderAccounts();
+  } else if (state.tab === "monthly") {
+    main.innerHTML = renderMonthly();
+  } else if (state.tab === "settings") {
+    main.innerHTML = renderSettings();
+    attachSettingsEvents();
+  }
+
+  document.querySelectorAll(".nav-btn").forEach((btn) => {
+    if (btn.getAttribute("data-tab") === state.tab) {
+      btn.classList.add("active");
+    } else {
+      btn.classList.remove("active");
+    }
+  });
+
+  // Update user badge
+  const userDisp = document.getElementById("sidebar-user-id");
+  const emailDisp = document.getElementById("sidebar-user-email");
+  const modalUid = document.getElementById("modal-uid-display");
+  
+  if (userDisp) {
+    userDisp.textContent = state.user?.displayName || (state.user ? (state.user.isAnonymous ? "Guest Mode" : state.user.email) : "Local Offline Mode");
+  }
+  if (emailDisp) {
+    emailDisp.textContent = state.isCloudActive ? "Cloud Synced (Firestore)" : "Data saved locally";
+  }
+  if (modalUid) {
+    modalUid.textContent = state.userId ? state.userId.slice(0, 10) + '...' : "Local Mode";
+  }
+
+  updateSyncStatusUI();
+}
+
+function setupGlobalEvents() {
+  document.querySelectorAll(".nav-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      state.tab = btn.getAttribute("data-tab");
+      state.editingTxId = null;
+      render();
+    });
+  });
+
+  // Modal tab switching
+  const tabConfigBtn = document.getElementById("modal-tab-config-btn");
+  const tabAuthBtn = document.getElementById("modal-tab-auth-btn");
+  const tabConfig = document.getElementById("modal-tab-config");
+  const tabAuth = document.getElementById("modal-tab-auth");
+
+  tabConfigBtn?.addEventListener("click", () => {
+    tabConfig.classList.remove("hidden");
+    tabAuth.classList.add("hidden");
+    tabConfigBtn.className = "py-2 px-4 border-b-2 border-emerald-600 text-emerald-700 font-semibold focus:outline-none";
+    tabAuthBtn.className = "py-2 px-4 border-b-2 border-transparent text-gray-500 hover:text-gray-700 focus:outline-none";
+  });
+
+  tabAuthBtn?.addEventListener("click", () => {
+    tabAuth.classList.remove("hidden");
+    tabConfig.classList.add("hidden");
+    tabAuthBtn.className = "py-2 px-4 border-b-2 border-emerald-600 text-emerald-700 font-semibold focus:outline-none";
+    tabConfigBtn.className = "py-2 px-4 border-b-2 border-transparent text-gray-500 hover:text-gray-700 focus:outline-none";
+  });
+
+  // Save Firebase Config
+  document.getElementById("save-cfg-btn")?.addEventListener("click", async () => {
+    const jsonStr = document.getElementById("cfg-json-input").value.trim();
+    let newCfg = null;
+
+    if (jsonStr) {
+      try {
+        newCfg = JSON.parse(jsonStr);
+      } catch(e) {
+        showToast("Invalid JSON string in Firebase config box", "❌");
+        return;
+      }
+    } else {
+      const apiKey = document.getElementById("cfg-apiKey").value.trim();
+      const authDomain = document.getElementById("cfg-authDomain").value.trim();
+      const projectId = document.getElementById("cfg-projectId").value.trim();
+      const appId = document.getElementById("cfg-appId").value.trim();
+
+      if (!apiKey || !projectId) {
+        showToast("Please provide at least API Key and Project ID", "⚠️");
+        return;
+      }
+
+      newCfg = { apiKey, authDomain, projectId, appId };
+    }
+
+    localStorage.setItem(FIREBASE_CFG_KEY, JSON.stringify(newCfg));
+    showToast("Firebase Config saved! Connecting...", "🔄");
+    
+    const success = await setupFirebaseInstance(newCfg);
+    if (success) {
+      showToast("Connected to Firebase!", "🎉");
+      document.getElementById("auth-modal").classList.remove("active");
+    } else {
+      showToast("Config saved, but Firebase connection failed. Staying in Local Mode.", "⚠️");
+    }
+    render();
+  });
+
+  document.getElementById("clear-cfg-btn")?.addEventListener("click", () => {
+    localStorage.removeItem(FIREBASE_CFG_KEY);
+    document.getElementById("cfg-json-input").value = "";
+    document.getElementById("cfg-apiKey").value = "";
+    document.getElementById("cfg-authDomain").value = "";
+    document.getElementById("cfg-projectId").value = "";
+    document.getElementById("cfg-appId").value = "";
+    showToast("Config cleared. Reverting to Local Mode.", "🧹");
+    state.isCloudActive = false;
+    state.cloudErrorMsg = "No active Firebase config";
+    updateSyncStatusUI();
+  });
+
+  // Modal toggles
+  document.getElementById("auth-modal-btn")?.addEventListener("click", () => {
+    document.getElementById("auth-modal").classList.add("active");
+  });
+  document.getElementById("auth-modal-close")?.addEventListener("click", () => {
+    document.getElementById("auth-modal").classList.remove("active");
+  });
+
+  // Delete modal actions
+  document.getElementById("confirm-delete-btn")?.addEventListener("click", async () => {
+    if (state.deletingTxId) {
+      if (state.editingTxId === state.deletingTxId) state.editingTxId = null;
+      await deleteTransaction(state.deletingTxId);
+      state.deletingTxId = null;
+    }
+    document.getElementById("delete-modal").classList.remove("active");
+  });
+
+  document.getElementById("confirm-delete-cancel")?.addEventListener("click", () => {
+    state.deletingTxId = null;
+    document.getElementById("delete-modal").classList.remove("active");
+  });
+
+  // Auth buttons
+  document.getElementById("google-signin-btn")?.addEventListener("click", async () => {
+    if (!firebaseAuthInstance) {
+      showToast("Please configure valid Firebase Keys first!", "⚠️");
+      return;
+    }
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(firebaseAuthInstance, provider);
+      document.getElementById("auth-modal").classList.remove("active");
+      showToast("Signed in with Google!", "🎉");
+    } catch (e) {
+      showToast(e.message || "Google Auth Error", "❌");
+    }
+  });
+
+  document.getElementById("email-auth-form")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!firebaseAuthInstance) {
+      showToast("Please configure valid Firebase Keys first!", "⚠️");
+      return;
+    }
+    const email = document.getElementById("auth-email").value;
+    const password = document.getElementById("auth-password").value;
+    try {
+      await signInWithEmailAndPassword(firebaseAuthInstance, email, password);
+      document.getElementById("auth-modal").classList.remove("active");
+      showToast("Signed in successfully!", "🔑");
+    } catch (e) {
+      showToast(e.message || "Sign in failed", "❌");
+    }
+  });
+
+  document.getElementById("email-signup-btn")?.addEventListener("click", async () => {
+    if (!firebaseAuthInstance) {
+      showToast("Please configure valid Firebase Keys first!", "⚠️");
+      return;
+    }
+    const email = document.getElementById("auth-email").value;
+    const password = document.getElementById("auth-password").value;
+    try {
+      await createUserWithEmailAndPassword(firebaseAuthInstance, email, password);
+      document.getElementById("auth-modal").classList.remove("active");
+      showToast("Account created!", "🎉");
+    } catch (e) {
+      showToast(e.message || "Sign up failed", "❌");
+    }
+  });
+
+  document.getElementById("sign-out-btn")?.addEventListener("click", async () => {
+    if (firebaseAuthInstance) {
+      await signOut(firebaseAuthInstance);
+      showToast("Signed out of Firebase", "👋");
+    }
+  });
+}
+
+window.addEventListener("DOMContentLoaded", async () => {
+  loadLocalStorage();
+  setupGlobalEvents();
+
+  const cfg = getStoredFirebaseConfig();
+  if (cfg) {
+    // Fill modal form inputs
+    document.getElementById("cfg-apiKey").value = cfg.apiKey || "";
+    document.getElementById("cfg-authDomain").value = cfg.authDomain || "";
+    document.getElementById("cfg-projectId").value = cfg.projectId || "";
+    document.getElementById("cfg-appId").value = cfg.appId || "";
+
+    // Attempt Firebase connection safely
+    await setupFirebaseInstance(cfg);
+  } else {
+    state.isCloudActive = false;
+    state.cloudErrorMsg = "Running in Local Storage mode (Offline).";
+    updateSyncStatusUI();
+  }
+
+  render();
+});
+</script>
+</body>
+</html>
