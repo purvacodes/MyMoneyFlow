@@ -3,39 +3,74 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Money Flow</title>
+  <title>Money Flow - Personal Finance Tracker</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Firebase Compat SDKs for single-file HTML -->
+  <!-- Google Fonts: Inter & Playfair Display for elegant financial typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  
+  <!-- Firebase Compat SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
   <style>
-    .glass {
-      background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(12px);
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+    .font-serif-currency {
+      font-family: 'Playfair Display', Georgia, serif;
+    }
+    .bg-cream {
+      background-color: #fdfbf7;
+    }
+    .bg-cream-card {
+      background-color: #ffffff;
+    }
+    .border-cream-accent {
+      border-color: #f0eae1;
+    }
+    .sidebar-bg {
+      background-color: #1e293b;
+    }
+    /* Custom scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.05);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(0,0,0,0.2);
+      border-radius: 999px;
     }
   </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen font-sans antialiased selection:bg-emerald-500 selection:text-white">
+<body class="bg-cream text-slate-800 min-h-screen flex flex-col antialiased selection:bg-teal-600 selection:text-white">
 
-  <!-- ================= LANDING / SIGN IN SCREEN ================= -->
-  <div id="landingScreen" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950 px-4">
-    <div class="max-w-md w-full glass p-8 rounded-2xl border border-slate-800 shadow-2xl text-center space-y-6">
-      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-3xl mb-2">
+  <!-- Toast Notification Bar -->
+  <div id="toastContainer" class="fixed top-5 right-5 z-[100] flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- ================= WELCOME SIGN-IN LANDING SCREEN ================= -->
+  <div id="landingGate" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/95 backdrop-blur-md px-4">
+    <div class="max-w-md w-full bg-slate-900 border border-slate-800 p-8 rounded-3xl shadow-2xl text-center space-y-6">
+      <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-teal-500/10 border border-teal-500/20 text-4xl mb-1 shadow-inner">
         💰
       </div>
       <div>
-        <h1 class="text-3xl font-bold tracking-tight text-white">Welcome to My Money Flow</h1>
+        <h1 class="text-3xl font-bold tracking-tight text-white font-serif-currency">Welcome to Money Flow</h1>
         <p class="text-slate-400 text-sm mt-2">Sign in to access your personal finance dashboard.</p>
       </div>
 
-      <!-- Auth Error / Success Alert -->
-      <div id="authAlert" class="hidden p-3 rounded-lg text-xs font-medium border"></div>
+      <!-- Auth Error / Status Alert -->
+      <div id="landingAlert" class="hidden p-3.5 rounded-xl text-xs font-medium border text-left transition-all"></div>
 
-      <!-- Sign In Actions -->
-      <div class="space-y-3 pt-2">
-        <button id="googleBtn" onclick="loginWithGoogle()" class="w-full flex items-center justify-center gap-3 bg-white hover:bg-slate-100 text-slate-900 font-semibold py-3 px-4 rounded-xl transition shadow-lg">
+      <!-- Auth Actions -->
+      <div class="space-y-3.5 pt-2">
+        <button id="googleSignInBtn" onclick="loginWithGoogle()" class="w-full flex items-center justify-center gap-3 bg-white hover:bg-slate-100 text-slate-900 font-semibold py-3 px-4 rounded-xl transition shadow-lg active:scale-[0.98]">
           <svg class="w-5 h-5" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
             <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -47,142 +82,399 @@
 
         <div class="relative flex items-center justify-center my-4">
           <div class="border-t border-slate-800 w-full"></div>
-          <span class="bg-slate-950 px-3 text-xs text-slate-500 uppercase tracking-widest absolute">Or Email</span>
+          <span class="bg-slate-900 px-3 text-xs text-slate-500 uppercase tracking-widest absolute">Or Email Login</span>
         </div>
 
         <form onsubmit="handleEmailAuth(event)" class="space-y-3">
-          <input type="email" id="emailInput" placeholder="Email address" required class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500 text-slate-200">
-          <input type="password" id="passwordInput" placeholder="Password" required class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500 text-slate-200">
-          <div class="grid grid-cols-2 gap-2 pt-1">
-            <button type="submit" onclick="authMode='signin'" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2.5 rounded-xl text-sm transition">Sign In</button>
-            <button type="submit" onclick="authMode='signup'" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium py-2.5 rounded-xl text-sm transition">Sign Up</button>
+          <input type="email" id="landingEmail" placeholder="Email Address" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-teal-500 text-slate-200 placeholder-slate-500">
+          <input type="password" id="landingPassword" placeholder="Password" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-teal-500 text-slate-200 placeholder-slate-500">
+          <div class="grid grid-cols-2 gap-2.5 pt-1">
+            <button type="submit" onclick="landingAuthMode='signin'" class="bg-teal-600 hover:bg-teal-500 text-white font-medium py-2.5 rounded-xl text-sm transition shadow">Sign In</button>
+            <button type="submit" onclick="landingAuthMode='signup'" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium py-2.5 rounded-xl text-sm transition">Sign Up</button>
           </div>
         </form>
       </div>
 
-      <p class="text-xs text-slate-500 border-t border-slate-800/80 pt-4">
-        Protected with Firebase End-to-End Cloud Authentication.
-      </p>
+      <div class="pt-4 border-t border-slate-800/80 flex flex-col items-center gap-2">
+        <button onclick="useLocalMode()" class="text-xs text-slate-400 hover:text-teal-400 underline transition">
+          Continue in Local Offline Mode
+        </button>
+        <span class="text-[11px] text-slate-600">Encrypted Cloud Backup &bull; Multi-Device Sync</span>
+      </div>
     </div>
   </div>
 
-  <!-- ================= MAIN APP DASHBOARD ================= -->
-  <div id="appDashboard" class="hidden min-h-screen flex flex-col md:flex-row">
+  <!-- ================= MAIN DASHBOARD APP CONTAINER ================= -->
+  <div id="mainApp" class="hidden min-h-screen flex flex-col md:flex-row w-full">
+    
     <!-- Sidebar -->
-    <aside class="w-full md:w-64 bg-slate-950 border-r border-slate-800 p-6 flex flex-col justify-between">
+    <aside class="w-full md:w-64 sidebar-bg text-slate-300 p-6 flex flex-col justify-between shrink-0 shadow-xl border-r border-slate-800/60">
       <div class="space-y-8">
+        <!-- Brand -->
         <div class="flex items-center gap-3">
-          <span class="text-2xl">💰</span>
-          <h2 class="text-xl font-bold tracking-tight text-white">Money Flow</h2>
+          <span class="text-3xl">💰</span>
+          <div>
+            <h2 class="text-xl font-bold tracking-tight text-white font-serif-currency">Money Flow</h2>
+            <p class="text-[10px] uppercase tracking-widest text-slate-400 font-semibold">Personal Finance</p>
+          </div>
         </div>
 
-        <nav class="space-y-2">
-          <a href="#" class="flex items-center gap-3 px-3 py-2 rounded-lg bg-emerald-500/10 text-emerald-400 font-medium text-sm border border-emerald-500/20">
-            📊 Dashboard
-          </a>
+        <!-- Mode Badge -->
+        <div class="flex items-center justify-between bg-slate-800/70 p-2.5 rounded-xl border border-slate-700/50">
+          <div id="statusBadge" class="flex items-center gap-2 text-xs font-semibold text-emerald-400">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span id="statusText">Cloud Synced</span>
+          </div>
+          <button onclick="openConfigModal()" class="text-[11px] bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-1 rounded-md transition">
+            Config / Auth
+          </button>
+        </div>
+
+        <!-- Navigation Links -->
+        <nav class="space-y-1.5" id="sidebarNav">
+          <button onclick="switchView('dashboard')" id="nav-dashboard" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition bg-teal-600/20 text-teal-300 border border-teal-500/30">
+            <span class="text-base">📊</span> Dashboard
+          </button>
+          <button onclick="switchView('transactions')" id="nav-transactions" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-800 hover:text-slate-200">
+            <span class="text-base">💳</span> Transactions
+          </button>
+          <button onclick="switchView('accounts')" id="nav-accounts" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-800 hover:text-slate-200">
+            <span class="text-base">🏦</span> Accounts
+          </button>
+          <button onclick="switchView('monthly')" id="nav-monthly" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-800 hover:text-slate-200">
+            <span class="text-base">📅</span> Monthly Summary
+          </button>
+          <button onclick="switchView('settings')" id="nav-settings" class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-800 hover:text-slate-200">
+            <span class="text-base">⚙️</span> Settings
+          </button>
         </nav>
       </div>
 
-      <!-- User Profile & Sign Out -->
-      <div class="pt-6 border-t border-slate-800 space-y-3">
-        <div class="text-xs text-slate-400">
-          <p class="text-slate-500">Logged in as:</p>
-          <p id="userEmailDisplay" class="font-medium text-slate-200 truncate"></p>
+      <!-- Sidebar Footer User Profile -->
+      <div class="pt-6 border-t border-slate-800/80 space-y-3">
+        <div class="text-xs">
+          <p class="text-slate-500">Active Session:</p>
+          <p id="userDisplayEmail" class="font-semibold text-slate-200 truncate mt-0.5">Local Mode User</p>
         </div>
-        <button onclick="signOutUser()" class="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 text-xs font-semibold py-2 rounded-lg transition">
-          Sign Out
+        <button onclick="handleSignOut()" class="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 text-xs font-semibold py-2 rounded-xl transition">
+          Sign Out / Lock
         </button>
       </div>
     </aside>
 
     <!-- Main Content Area -->
-    <main class="flex-1 p-6 md:p-10 space-y-8 max-w-6xl mx-auto w-full">
-      <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 class="text-2xl font-bold text-white">This month, at a glance</h1>
-          <p id="currentDateDisplay" class="text-sm text-slate-400 mt-1"></p>
-        </div>
-        <button onclick="toggleTransactionModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-medium px-4 py-2.5 rounded-xl text-sm transition shadow-lg flex items-center justify-center gap-2">
-          <span>+</span> Add Transaction
-        </button>
-      </header>
+    <main class="flex-1 p-6 md:p-10 max-w-7xl mx-auto w-full space-y-8 overflow-y-auto">
 
-      <!-- Account Balance Cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div class="bg-slate-800/50 border border-slate-800 p-5 rounded-2xl">
-          <p class="text-xs uppercase tracking-wider text-slate-400 font-semibold">SBI Balance</p>
-          <p id="sbiBalance" class="text-2xl font-bold text-white mt-2">₹0</p>
+      <!-- ================= VIEW 1: DASHBOARD ================= -->
+      <section id="viewDashboard" class="space-y-8">
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 class="text-3xl font-bold tracking-tight text-slate-900 font-serif-currency">This month, at a glance</h1>
+            <p id="dashboardSubHeading" class="text-sm font-medium text-slate-500 mt-1">September 2026</p>
+          </div>
+          <button onclick="openAddModal()" class="bg-teal-700 hover:bg-teal-800 text-white font-medium px-5 py-2.5 rounded-xl text-sm transition shadow-md hover:shadow-lg flex items-center justify-center gap-2 active:scale-95">
+            <span class="text-lg leading-none">+</span> Add Transaction
+          </button>
         </div>
-        <div class="bg-slate-800/50 border border-slate-800 p-5 rounded-2xl">
-          <p class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Indus Balance</p>
-          <p id="indusBalance" class="text-2xl font-bold text-white mt-2">₹0</p>
-        </div>
-        <div class="bg-slate-800/50 border border-slate-800 p-5 rounded-2xl">
-          <p class="text-xs uppercase tracking-wider text-slate-400 font-semibold">Total Across Accounts</p>
-          <p id="totalBalance" class="text-2xl font-bold text-emerald-400 mt-2">₹0</p>
-        </div>
-      </div>
 
-      <!-- Transactions List -->
-      <section class="bg-slate-800/30 border border-slate-800 rounded-2xl p-6 space-y-4">
-        <h2 class="text-lg font-semibold text-white">Recent Transactions</h2>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-sm text-slate-300">
-            <thead class="text-xs uppercase bg-slate-900/50 text-slate-400">
-              <tr>
-                <th class="p-3 rounded-l-lg">Date</th>
-                <th class="p-3">Account</th>
-                <th class="p-3">Category</th>
-                <th class="p-3">Description</th>
-                <th class="p-3 text-right rounded-r-lg">Amount</th>
-              </tr>
-            </thead>
-            <tbody id="transactionTableBody" class="divide-y divide-slate-800/50">
-              <!-- JS Populated -->
-            </tbody>
-          </table>
+        <!-- 4 Top Stat Cards (Warm Cream Card Theme) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <!-- Card 1: SBI Balance -->
+          <div class="bg-cream-card border border-cream-accent p-5 rounded-2xl shadow-sm hover:shadow-md transition">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">SBI BALANCE</p>
+            <p id="cardSbi" class="text-2xl sm:text-3xl font-bold text-slate-800 font-serif-currency mt-2">₹23,550</p>
+          </div>
+
+          <!-- Card 2: Indus Balance -->
+          <div class="bg-cream-card border border-cream-accent p-5 rounded-2xl shadow-sm hover:shadow-md transition">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-purple-900/60">INDUS BALANCE</p>
+            <p id="cardIndus" class="text-2xl sm:text-3xl font-bold text-purple-950 font-serif-currency mt-2">₹60,000</p>
+          </div>
+
+          <!-- Card 3: Total Balance -->
+          <div class="bg-cream-card border border-cream-accent p-5 rounded-2xl shadow-sm hover:shadow-md transition">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">TOTAL ACROSS ACCOUNTS</p>
+            <p id="cardTotal" class="text-2xl sm:text-3xl font-bold text-slate-900 font-serif-currency mt-2">₹83,550</p>
+          </div>
+
+          <!-- Card 4: Net Monthly Logged -->
+          <div class="bg-cream-card border border-cream-accent p-5 rounded-2xl shadow-sm hover:shadow-md transition">
+            <p class="text-[11px] font-bold uppercase tracking-wider text-teal-700">NET MONTHLY LOGGED</p>
+            <p id="cardNet" class="text-2xl sm:text-3xl font-bold text-teal-700 font-serif-currency mt-2">₹43,550</p>
+            <p class="text-[11px] text-slate-400 mt-1 font-medium">income &minus; expenses &minus; commitments</p>
+          </div>
+        </div>
+
+        <!-- Analytics Category Breakdown Card -->
+        <div class="bg-cream-card border border-cream-accent p-6 rounded-2xl shadow-sm space-y-5">
+          <div>
+            <h2 class="text-xl font-bold text-slate-900 font-serif-currency">Where your money went this month</h2>
+            <p id="categorySubtitle" class="text-xs text-slate-500 mt-0.5">Category-wise breakdown of logged spending (₹1,450)</p>
+          </div>
+
+          <!-- Category Progress Bars List -->
+          <div id="categoryBarsContainer" class="space-y-4">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+        <!-- Recent Transactions Quick Overview -->
+        <div class="bg-cream-card border border-cream-accent p-6 rounded-2xl shadow-sm space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-bold text-slate-900 font-serif-currency">Recent Activity</h3>
+            <button onclick="switchView('transactions')" class="text-xs text-teal-700 font-semibold hover:underline">View All &rarr;</button>
+          </div>
+          
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-slate-700">
+              <thead class="text-[11px] uppercase tracking-wider text-slate-400 bg-slate-50 border-b border-slate-100">
+                <tr>
+                  <th class="p-3">Date</th>
+                  <th class="p-3">Account</th>
+                  <th class="p-3">Category</th>
+                  <th class="p-3">Description</th>
+                  <th class="p-3 text-right">Amount</th>
+                </tr>
+              </thead>
+              <tbody id="dashboardRecentTable" class="divide-y divide-slate-100">
+                <!-- JS Populated -->
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
+
+      <!-- ================= VIEW 2: TRANSACTIONS ================= -->
+      <section id="viewTransactions" class="hidden space-y-6">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 class="text-3xl font-bold text-slate-900 font-serif-currency">Transactions Log</h1>
+            <p class="text-sm text-slate-500 mt-1">Detailed record of all your incoming and outgoing money flow.</p>
+          </div>
+          <button onclick="openAddModal()" class="bg-teal-700 hover:bg-teal-800 text-white font-medium px-5 py-2.5 rounded-xl text-sm transition shadow flex items-center justify-center gap-2">
+            <span>+</span> Log Transaction
+          </button>
+        </div>
+
+        <!-- Filter Controls -->
+        <div class="bg-cream-card border border-cream-accent p-4 rounded-2xl shadow-sm flex flex-col md:flex-row gap-3">
+          <input type="text" id="txSearchInput" oninput="renderTransactionsView()" placeholder="Search description, category..." class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-teal-600 flex-1">
+          
+          <select id="txAccountFilter" onchange="renderTransactionsView()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-teal-600">
+            <option value="ALL">All Accounts</option>
+            <option value="SBI">SBI Account</option>
+            <option value="INDUS">INDUS Account</option>
+          </select>
+
+          <select id="txTypeFilter" onchange="renderTransactionsView()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-teal-600">
+            <option value="ALL">All Types</option>
+            <option value="Expense">Expenses Only</option>
+            <option value="Income">Income Only</option>
+          </select>
+        </div>
+
+        <!-- Full Transactions Table -->
+        <div class="bg-cream-card border border-cream-accent rounded-2xl shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-slate-700">
+              <thead class="text-[11px] uppercase tracking-wider text-slate-400 bg-slate-50 border-b border-slate-100">
+                <tr>
+                  <th class="p-3.5">Date</th>
+                  <th class="p-3.5">Account</th>
+                  <th class="p-3.5">Category</th>
+                  <th class="p-3.5">Description</th>
+                  <th class="p-3.5 text-right">Amount</th>
+                  <th class="p-3.5 text-center">Action</th>
+                </tr>
+              </thead>
+              <tbody id="fullTransactionsTable" class="divide-y divide-slate-100">
+                <!-- JS Populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= VIEW 3: ACCOUNTS ================= -->
+      <section id="viewAccounts" class="hidden space-y-6">
+        <div>
+          <h1 class="text-3xl font-bold text-slate-900 font-serif-currency">Accounts Overview</h1>
+          <p class="text-sm text-slate-500 mt-1">Manage individual bank balances and opening amounts.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- SBI Account Details -->
+          <div class="bg-cream-card border border-cream-accent p-6 rounded-2xl shadow-sm space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 rounded-full text-xs font-bold">SBI Account</span>
+              <span class="text-xs text-slate-400">Primary Bank</span>
+            </div>
+            <div>
+              <p class="text-xs text-slate-500 uppercase tracking-wider">Current Balance</p>
+              <p id="accSbiVal" class="text-3xl font-bold text-slate-900 font-serif-currency mt-1">₹23,550</p>
+            </div>
+            <div class="pt-3 border-t border-slate-100 flex justify-between text-xs text-slate-500">
+              <span>Status: Active</span>
+              <span>Updated in real-time</span>
+            </div>
+          </div>
+
+          <!-- Indus Account Details -->
+          <div class="bg-cream-card border border-cream-accent p-6 rounded-2xl shadow-sm space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="px-3 py-1 bg-purple-50 text-purple-700 border border-purple-200 rounded-full text-xs font-bold">INDUS Account</span>
+              <span class="text-xs text-slate-400">Secondary Bank</span>
+            </div>
+            <div>
+              <p class="text-xs text-slate-500 uppercase tracking-wider">Current Balance</p>
+              <p id="accIndusVal" class="text-3xl font-bold text-purple-950 font-serif-currency mt-1">₹60,000</p>
+            </div>
+            <div class="pt-3 border-t border-slate-100 flex justify-between text-xs text-slate-500">
+              <span>Status: Active</span>
+              <span>Updated in real-time</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= VIEW 4: MONTHLY SUMMARY ================= -->
+      <section id="viewMonthly" class="hidden space-y-6">
+        <div>
+          <h1 class="text-3xl font-bold text-slate-900 font-serif-currency">Monthly Financial Summary</h1>
+          <p class="text-sm text-slate-500 mt-1">Historical view of total income vs total spending.</p>
+        </div>
+
+        <div class="bg-cream-card border border-cream-accent p-6 rounded-2xl shadow-sm space-y-4">
+          <h3 class="text-lg font-bold text-slate-900 font-serif-currency">September 2026 Breakdown</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="p-4 bg-emerald-50/60 border border-emerald-100 rounded-xl">
+              <p class="text-xs font-semibold text-emerald-800 uppercase">Total Income</p>
+              <p id="monthlyIncome" class="text-2xl font-bold text-emerald-700 font-serif-currency mt-1">₹45,000</p>
+            </div>
+            <div class="p-4 bg-rose-50/60 border border-rose-100 rounded-xl">
+              <p class="text-xs font-semibold text-rose-800 uppercase">Total Expenses</p>
+              <p id="monthlyExpenses" class="text-2xl font-bold text-rose-700 font-serif-currency mt-1">₹1,450</p>
+            </div>
+            <div class="p-4 bg-teal-50/60 border border-teal-100 rounded-xl">
+              <p class="text-xs font-semibold text-teal-800 uppercase">Net Surplus</p>
+              <p id="monthlySurplus" class="text-2xl font-bold text-teal-800 font-serif-currency mt-1">₹43,550</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= VIEW 5: SETTINGS ================= -->
+      <section id="viewSettings" class="hidden space-y-6">
+        <div>
+          <h1 class="text-3xl font-bold text-slate-900 font-serif-currency">Application Settings</h1>
+          <p class="text-sm text-slate-500 mt-1">Manage data export, backup, and connection status.</p>
+        </div>
+
+        <div class="bg-cream-card border border-cream-accent p-6 rounded-2xl shadow-sm space-y-6 max-w-2xl">
+          <div>
+            <h3 class="text-base font-bold text-slate-900">Data Management</h3>
+            <p class="text-xs text-slate-500 mt-0.5">Export or import your transaction records in JSON format.</p>
+            <div class="flex gap-3 mt-4">
+              <button onclick="exportDataJSON()" class="bg-slate-800 hover:bg-slate-900 text-white text-xs font-medium px-4 py-2.5 rounded-xl transition">
+                📥 Export Data JSON
+              </button>
+              <button onclick="resetDataToDefault()" class="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs font-medium px-4 py-2.5 rounded-xl transition">
+                🗑 Reset Data
+              </button>
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-slate-100">
+            <h3 class="text-base font-bold text-slate-900">Firebase Keys Status</h3>
+            <p class="text-xs text-slate-500 mt-0.5">Project ID: <code class="bg-slate-100 px-1.5 py-0.5 rounded text-teal-800">mymoneyflow15</code></p>
+            <button onclick="openConfigModal()" class="mt-3 text-xs bg-teal-700 hover:bg-teal-800 text-white font-medium px-4 py-2 rounded-xl transition">
+              Manage Credentials
+            </button>
+          </div>
+        </div>
+      </section>
+
     </main>
   </div>
 
-  <!-- Modal for Adding Transaction -->
-  <div id="addModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-    <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl max-w-md w-full space-y-4">
-      <h3 class="text-lg font-bold text-white">Add New Transaction</h3>
-      <form onsubmit="handleAddTransaction(event)" class="space-y-3 text-sm">
+  <!-- ================= ADD TRANSACTION MODAL ================= -->
+  <div id="addModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-4">
+    <div class="bg-white border border-slate-200 p-6 rounded-3xl max-w-md w-full shadow-2xl space-y-5">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="text-lg font-bold text-slate-900 font-serif-currency">Log New Transaction</h3>
+        <button onclick="closeAddModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+      </div>
+
+      <form onsubmit="handleAddTransaction(event)" class="space-y-4 text-sm">
         <div>
-          <label class="text-xs text-slate-400">Account</label>
-          <select id="txAccount" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white mt-1">
-            <option value="SBI">SBI</option>
-            <option value="INDUS">INDUS</option>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Select Account</label>
+          <select id="inputAccount" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:border-teal-600">
+            <option value="SBI">SBI Account</option>
+            <option value="INDUS">INDUS Account</option>
           </select>
         </div>
-        <div>
-          <label class="text-xs text-slate-400">Type</label>
-          <select id="txType" class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white mt-1">
-            <option value="Expense">Expense</option>
-            <option value="Income">Income</option>
-          </select>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Type</label>
+            <select id="inputType" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:border-teal-600">
+              <option value="Expense">Expense</option>
+              <option value="Income">Income</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Amount (₹)</label>
+            <input type="number" id="inputAmount" step="any" placeholder="1450" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:border-teal-600">
+          </div>
         </div>
+
         <div>
-          <label class="text-xs text-slate-400">Amount (₹)</label>
-          <input type="number" id="txAmount" required class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white mt-1">
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Category</label>
+          <input type="text" id="inputCategory" placeholder="Groceries, Utilities, Rent..." required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:border-teal-600">
         </div>
+
         <div>
-          <label class="text-xs text-slate-400">Category</label>
-          <input type="text" id="txCategory" placeholder="Groceries, Salary, Utilities" required class="w-full bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-white mt-1">
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Description / Note</label>
+          <input type="text" id="inputDescription" placeholder="Supermarket shopping" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:border-teal-600">
         </div>
-        <div class="flex gap-2 pt-2">
-          <button type="button" onclick="toggleTransactionModal()" class="w-1/2 bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded-lg">Cancel</button>
-          <button type="submit" class="w-1/2 bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-2 rounded-lg">Save</button>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Date</label>
+          <input type="date" id="inputDate" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-slate-800 focus:outline-none focus:border-teal-600">
+        </div>
+
+        <div class="flex gap-3 pt-3">
+          <button type="button" onclick="closeAddModal()" class="w-1/2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium py-2.5 rounded-xl transition">Cancel</button>
+          <button type="submit" class="w-1/2 bg-teal-700 hover:bg-teal-800 text-white font-medium py-2.5 rounded-xl transition shadow">Save Entry</button>
         </div>
       </form>
     </div>
   </div>
 
+  <!-- CONFIG / AUTH SETTINGS MODAL -->
+  <div id="configModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-4">
+    <div class="bg-white border border-slate-200 p-6 rounded-3xl max-w-md w-full shadow-2xl space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="text-lg font-bold text-slate-900 font-serif-currency">Firebase Auth & Credentials</h3>
+        <button onclick="closeConfigModal()" class="text-slate-400 hover:text-slate-600 text-xl font-bold">&times;</button>
+      </div>
+
+      <div class="text-xs text-slate-600 space-y-2">
+        <p><strong>Status:</strong> <span id="modalAuthStatus" class="text-emerald-700 font-semibold">Active Session</span></p>
+        <p><strong>Firebase App ID:</strong> <code class="bg-slate-100 px-1 py-0.5 rounded text-[11px]">mymoneyflow15</code></p>
+      </div>
+
+      <div class="pt-2">
+        <button onclick="handleSignOut(); closeConfigModal();" class="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2.5 rounded-xl text-xs transition">
+          Sign Out & Return to Welcome Gate
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
-    // Config hardcoded for your project
+    // Exact Hardcoded Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyB25VVAI7YRTmnPJ8j_I1cVskvje_1TRYA",
       authDomain: "mymoneyflow15.firebaseapp.com",
@@ -192,129 +484,438 @@
       appId: "1:41077570008:web:5ae22b4a073e8cc5de25ad"
     };
 
-    firebase.initializeApp(firebaseConfig);
+    // Initialize Firebase
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    // Application State
     let currentUser = null;
-    let authMode = 'signin';
+    let isLocalMode = false;
+    let landingAuthMode = 'signin';
+    let currentView = 'dashboard';
+
+    // Default Seed Data matching user's exact original figures
+    const defaultData = [
+      {
+        id: 'seed-1',
+        account: 'SBI',
+        type: 'Income',
+        amount: 25000,
+        category: 'Salary',
+        description: 'Monthly Salary Credit',
+        date: '2026-09-01'
+      },
+      {
+        id: 'seed-2',
+        account: 'INDUS',
+        type: 'Income',
+        amount: 60000,
+        category: 'Savings',
+        description: 'Opening Balance',
+        date: '2026-09-01'
+      },
+      {
+        id: 'seed-3',
+        account: 'SBI',
+        type: 'Expense',
+        amount: 1450,
+        category: 'Groceries',
+        description: 'Supermarket Provisions',
+        date: '2026-09-05'
+      }
+    ];
+
     let transactions = [];
 
-    // Observe Auth State
+    // Helper: Toast Notifications
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      const bg = type === 'error' ? 'bg-rose-800 text-white' : type === 'success' ? 'bg-emerald-800 text-white' : 'bg-slate-900 text-white';
+      toast.className = `${bg} px-4 py-3 rounded-xl shadow-xl text-xs font-semibold pointer-events-auto transition-all duration-300 transform translate-y-2 opacity-0`;
+      toast.innerText = message;
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      }, 50);
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    // Auth Listener
     auth.onAuthStateChanged((user) => {
       if (user) {
         currentUser = user;
-        document.getElementById('userEmailDisplay').innerText = user.email || user.displayName || 'Authenticated User';
-        document.getElementById('landingScreen').classList.add('hidden');
-        document.getElementById('appDashboard').classList.remove('hidden');
-        loadUserData();
+        isLocalMode = false;
+        document.getElementById('userDisplayEmail').innerText = user.email || 'Google User';
+        document.getElementById('modalAuthStatus').innerText = `Signed in as ${user.email || 'Google Account'}`;
+        document.getElementById('statusBadge').className = 'flex items-center gap-2 text-xs font-semibold text-emerald-400';
+        document.getElementById('statusText').innerText = 'Cloud Synced';
+        
+        // Hide landing, reveal main dashboard
+        document.getElementById('landingGate').classList.add('hidden');
+        document.getElementById('mainApp').classList.remove('hidden');
+
+        listenToFirestore();
+        showToast(`Welcome back, ${user.email || 'User'}!`, 'success');
       } else {
-        currentUser = null;
-        document.getElementById('landingScreen').classList.remove('hidden');
-        document.getElementById('appDashboard').classList.add('hidden');
+        if (!isLocalMode) {
+          currentUser = null;
+          document.getElementById('landingGate').classList.remove('hidden');
+          document.getElementById('mainApp').classList.add('hidden');
+        }
       }
     });
 
-    function showAlert(msg, isError = true) {
-      const el = document.getElementById('authAlert');
+    function showLandingAlert(msg, isError = true) {
+      const el = document.getElementById('landingAlert');
       el.innerText = msg;
-      el.className = `p-3 rounded-lg text-xs font-medium border ${isError ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'}`;
+      el.className = `p-3.5 rounded-xl text-xs font-medium border text-left ${isError ? 'bg-rose-500/10 border-rose-500/20 text-rose-400' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'}`;
       el.classList.remove('hidden');
     }
 
     function loginWithGoogle() {
       const provider = new firebase.auth.GoogleAuthProvider();
-      auth.signInWithPopup(provider).catch((err) => showAlert(err.message));
+      auth.signInWithPopup(provider).catch((err) => {
+        showLandingAlert(err.message, true);
+      });
     }
 
     function handleEmailAuth(e) {
       e.preventDefault();
-      const email = document.getElementById('emailInput').value;
-      const password = document.getElementById('passwordInput').value;
+      const email = document.getElementById('landingEmail').value;
+      const password = document.getElementById('landingPassword').value;
 
-      if (authMode === 'signup') {
+      if (landingAuthMode === 'signup') {
         auth.createUserWithEmailAndPassword(email, password)
-          .catch((err) => showAlert(err.message));
+          .then(() => showToast('Account created successfully!', 'success'))
+          .catch((err) => showLandingAlert(err.message, true));
       } else {
         auth.signInWithEmailAndPassword(email, password)
-          .catch((err) => showAlert(err.message));
+          .catch((err) => showLandingAlert(err.message, true));
       }
     }
 
-    function signOutUser() {
-      auth.signOut();
+    function useLocalMode() {
+      isLocalMode = true;
+      document.getElementById('landingGate').classList.add('hidden');
+      document.getElementById('mainApp').classList.remove('hidden');
+      document.getElementById('userDisplayEmail').innerText = 'Local Offline Mode';
+      document.getElementById('statusBadge').className = 'flex items-center gap-2 text-xs font-semibold text-amber-400';
+      document.getElementById('statusText').innerText = 'Local Mode';
+      loadLocalData();
+      showToast('Operating in Local Offline Mode', 'info');
     }
 
-    // Date formatting helper: DD MMM YYYY
-    function formatDate(date) {
-      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-      const d = new Date(date);
-      return `${String(d.getDate()).padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+    function handleSignOut() {
+      if (auth.currentUser) {
+        auth.signOut();
+      }
+      isLocalMode = false;
+      document.getElementById('landingGate').classList.remove('hidden');
+      document.getElementById('mainApp').classList.add('hidden');
+      showToast('Signed out successfully.', 'info');
     }
 
-    document.getElementById('currentDateDisplay').innerText = formatDate(new Date());
-
-    // Firestore Sync
-    function loadUserData() {
+    function listenToFirestore() {
       if (!currentUser) return;
       db.collection('users').doc(currentUser.uid).collection('transactions')
-        .orderBy('timestamp', 'desc')
         .onSnapshot((snapshot) => {
+          if (snapshot.empty && transactions.length === 0) {
+            // Seed initial data if empty
+            defaultData.forEach(item => {
+              db.collection('users').doc(currentUser.uid).collection('transactions').add(item);
+            });
+            return;
+          }
           transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-          renderData();
-        }, (err) => console.error(err));
+          renderAllViews();
+        }, (err) => {
+          console.error("Firestore sync error:", err);
+          showToast("Cloud sync warning. Loading cached records.", 'error');
+        });
     }
 
-    function renderData() {
-      let sbi = 0, indus = 0;
-      const tbody = document.getElementById('transactionTableBody');
+    function loadLocalData() {
+      const stored = localStorage.getItem('moneyflow_data');
+      if (stored) {
+        try {
+          transactions = JSON.parse(stored);
+        } catch(e) {
+          transactions = [...defaultData];
+        }
+      } else {
+        transactions = [...defaultData];
+        saveLocalData();
+      }
+      renderAllViews();
+    }
+
+    function saveLocalData() {
+      localStorage.setItem('moneyflow_data', JSON.stringify(transactions));
+    }
+
+    function switchView(viewName) {
+      currentView = viewName;
+      ['dashboard', 'transactions', 'accounts', 'monthly', 'settings'].forEach(v => {
+        const viewEl = document.getElementById(`view${v.charAt(0).toUpperCase() + v.slice(1)}`);
+        const navEl = document.getElementById(`nav-${v}`);
+        
+        if (v === viewName) {
+          viewEl.classList.remove('hidden');
+          navEl.className = "w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition bg-teal-600/20 text-teal-300 border border-teal-500/30";
+        } else {
+          viewEl.classList.add('hidden');
+          navEl.className = "w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-800 hover:text-slate-200";
+        }
+      });
+      renderAllViews();
+    }
+
+    function renderAllViews() {
+      renderDashboardView();
+      renderTransactionsView();
+      renderAccountsView();
+      renderMonthlyView();
+    }
+
+    function renderDashboardView() {
+      let sbi = 0;
+      let indus = 0;
+      let monthlyIncome = 0;
+      let monthlyExpense = 0;
+      const categoryTotals = {};
+
+      transactions.forEach(t => {
+        const amt = parseFloat(t.amount) || 0;
+        if (t.account === 'SBI') {
+          sbi += (t.type === 'Income' ? amt : -amt);
+        } else if (t.account === 'INDUS') {
+          indus += (t.type === 'Income' ? amt : -amt);
+        }
+
+        if (t.type === 'Expense') {
+          monthlyExpense += amt;
+          categoryTotals[t.category] = (categoryTotals[t.category] || 0) + amt;
+        } else {
+          monthlyIncome += amt;
+        }
+      });
+
+      const total = sbi + indus;
+      const net = monthlyIncome - monthlyExpense;
+
+      // Update Card Values
+      document.getElementById('cardSbi').innerText = `₹${sbi.toLocaleString('en-IN')}`;
+      document.getElementById('cardIndus').innerText = `₹${indus.toLocaleString('en-IN')}`;
+      document.getElementById('cardTotal').innerText = `₹${total.toLocaleString('en-IN')}`;
+      document.getElementById('cardNet').innerText = `₹${net.toLocaleString('en-IN')}`;
+
+      // Update Category Progress Bars
+      const barsContainer = document.getElementById('categoryBarsContainer');
+      barsContainer.innerHTML = '';
+      document.getElementById('categorySubtitle').innerText = `Category-wise breakdown of logged spending (₹${monthlyExpense.toLocaleString('en-IN')})`;
+
+      const categories = Object.keys(categoryTotals);
+      if (categories.length === 0) {
+        barsContainer.innerHTML = `<p class="text-xs text-slate-400 italic">No expenses logged for this period.</p>`;
+      } else {
+        categories.forEach(cat => {
+          const catAmt = categoryTotals[cat];
+          const pct = monthlyExpense > 0 ? Math.min(100, Math.round((catAmt / monthlyExpense) * 100)) : 0;
+
+          const barItem = document.createElement('div');
+          barItem.className = 'space-y-1.5';
+          barItem.innerHTML = `
+            <div class="flex justify-between text-xs font-semibold text-slate-700">
+              <span class="flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-teal-600"></span>${cat}</span>
+              <span>₹${catAmt.toLocaleString('en-IN')} (${pct}%)</span>
+            </div>
+            <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden">
+              <div class="bg-teal-600 h-3 rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+            </div>
+          `;
+          barsContainer.appendChild(barItem);
+        });
+      }
+
+      // Populate Recent Transactions Table
+      const recentTbody = document.getElementById('dashboardRecentTable');
+      recentTbody.innerHTML = '';
+
+      const recentDocs = [...transactions].sort((a,b) => new Date(b.date || 0) - new Date(a.date || 0)).slice(0, 5);
+      
+      if (recentDocs.length === 0) {
+        recentTbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-xs text-slate-400">No recent transactions.</td></tr>`;
+      } else {
+        recentDocs.forEach(t => {
+          const row = document.createElement('tr');
+          row.className = 'hover:bg-slate-50/80 transition';
+          row.innerHTML = `
+            <td class="p-3 font-medium text-slate-500 text-xs">${t.date || 'N/A'}</td>
+            <td class="p-3"><span class="px-2 py-0.5 rounded-md text-[11px] font-bold ${t.account === 'SBI' ? 'bg-blue-50 text-blue-700' : 'bg-purple-50 text-purple-700'}">${t.account}</span></td>
+            <td class="p-3 font-semibold text-slate-700 text-xs">${t.category}</td>
+            <td class="p-3 text-slate-500 text-xs">${t.description || '-'}</td>
+            <td class="p-3 text-right font-bold text-xs ${t.type === 'Income' ? 'text-emerald-600' : 'text-slate-800'}">${t.type === 'Income' ? '+' : '-'}₹${(parseFloat(t.amount) || 0).toLocaleString('en-IN')}</td>
+          `;
+          recentTbody.appendChild(row);
+        });
+      }
+    }
+
+    function renderTransactionsView() {
+      const search = (document.getElementById('txSearchInput')?.value || '').toLowerCase();
+      const accountFilter = document.getElementById('txAccountFilter')?.value || 'ALL';
+      const typeFilter = document.getElementById('txTypeFilter')?.value || 'ALL';
+
+      const tbody = document.getElementById('fullTransactionsTable');
+      if (!tbody) return;
       tbody.innerHTML = '';
 
-      transactions.forEach(tx => {
-        const amt = parseFloat(tx.amount) || 0;
-        if (tx.account === 'SBI') sbi += (tx.type === 'Income' ? amt : -amt);
-        if (tx.account === 'INDUS') indus += (tx.type === 'Income' ? amt : -amt);
+      const filtered = transactions.filter(t => {
+        const matchesSearch = (t.description || '').toLowerCase().includes(search) || (t.category || '').toLowerCase().includes(search);
+        const matchesAccount = accountFilter === 'ALL' || t.account === accountFilter;
+        const matchesType = typeFilter === 'ALL' || t.type === typeFilter;
+        return matchesSearch && matchesAccount && matchesType;
+      }).sort((a,b) => new Date(b.date || 0) - new Date(a.date || 0));
 
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-xs text-slate-400">No transactions match your search filters.</td></tr>`;
+        return;
+      }
+
+      filtered.forEach(t => {
         const row = document.createElement('tr');
-        row.className = 'hover:bg-slate-800/40 border-b border-slate-800/40';
+        row.className = 'hover:bg-slate-50 transition';
         row.innerHTML = `
-          <td class="p-3 font-medium text-slate-400">${formatDate(tx.timestamp || new Date())}</td>
-          <td class="p-3"><span class="px-2 py-1 rounded text-xs ${tx.account === 'SBI' ? 'bg-blue-500/10 text-blue-400' : 'bg-purple-500/10 text-purple-400'}">${tx.account}</span></td>
-          <td class="p-3">${tx.category}</td>
-          <td class="p-3 text-slate-400">${tx.type}</td>
-          <td class="p-3 text-right font-bold ${tx.type === 'Income' ? 'text-emerald-400' : 'text-slate-200'}">${tx.type === 'Income' ? '+' : '-'}₹${amt.toLocaleString()}</td>
+          <td class="p-3.5 text-xs text-slate-500 font-medium">${t.date || '-'}</td>
+          <td class="p-3.5"><span class="px-2.5 py-1 rounded-md text-[11px] font-bold ${t.account === 'SBI' ? 'bg-blue-50 text-blue-700 border border-blue-100' : 'bg-purple-50 text-purple-700 border border-purple-100'}">${t.account}</span></td>
+          <td class="p-3.5 font-semibold text-slate-700 text-xs">${t.category}</td>
+          <td class="p-3.5 text-slate-500 text-xs">${t.description || '-'}</td>
+          <td class="p-3.5 text-right font-bold text-xs ${t.type === 'Income' ? 'text-emerald-600' : 'text-slate-800'}">${t.type === 'Income' ? '+' : '-'}₹${(parseFloat(t.amount) || 0).toLocaleString('en-IN')}</td>
+          <td class="p-3.5 text-center">
+            <button onclick="deleteTransaction('${t.id}')" class="text-rose-500 hover:text-rose-700 text-xs font-semibold p-1 hover:bg-rose-50 rounded transition">&times; Delete</button>
+          </td>
         `;
         tbody.appendChild(row);
       });
-
-      document.getElementById('sbiBalance').innerText = `₹${sbi.toLocaleString()}`;
-      document.getElementById('indusBalance').innerText = `₹${indus.toLocaleString()}`;
-      document.getElementById('totalBalance').innerText = `₹${(sbi + indus).toLocaleString()}`;
     }
 
-    function toggleTransactionModal() {
-      document.getElementById('addModal').classList.toggle('hidden');
+    function renderAccountsView() {
+      let sbi = 0, indus = 0;
+      transactions.forEach(t => {
+        const amt = parseFloat(t.amount) || 0;
+        if (t.account === 'SBI') sbi += (t.type === 'Income' ? amt : -amt);
+        if (t.account === 'INDUS') indus += (t.type === 'Income' ? amt : -amt);
+      });
+      document.getElementById('accSbiVal').innerText = `₹${sbi.toLocaleString('en-IN')}`;
+      document.getElementById('accIndusVal').innerText = `₹${indus.toLocaleString('en-IN')}`;
+    }
+
+    function renderMonthlyView() {
+      let income = 0, expenses = 0;
+      transactions.forEach(t => {
+        const amt = parseFloat(t.amount) || 0;
+        if (t.type === 'Income') income += amt;
+        else expenses += amt;
+      });
+      document.getElementById('monthlyIncome').innerText = `₹${income.toLocaleString('en-IN')}`;
+      document.getElementById('monthlyExpenses').innerText = `₹${expenses.toLocaleString('en-IN')}`;
+      document.getElementById('monthlySurplus').innerText = `₹${(income - expenses).toLocaleString('en-IN')}`;
+    }
+
+    function openAddModal() {
+      document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
+      document.getElementById('addModal').classList.remove('hidden');
+    }
+
+    function closeAddModal() {
+      document.getElementById('addModal').classList.add('hidden');
+    }
+
+    function openConfigModal() {
+      document.getElementById('configModal').classList.remove('hidden');
+    }
+
+    function closeConfigModal() {
+      document.getElementById('configModal').classList.add('hidden');
     }
 
     function handleAddTransaction(e) {
       e.preventDefault();
-      if (!currentUser) return;
-
-      const newTx = {
-        account: document.getElementById('txAccount').value,
-        type: document.getElementById('txType').value,
-        amount: parseFloat(document.getElementById('txAmount').value),
-        category: document.getElementById('txCategory').value,
-        timestamp: new Date().toISOString()
+      const newEntry = {
+        account: document.getElementById('inputAccount').value,
+        type: document.getElementById('inputType').value,
+        amount: parseFloat(document.getElementById('inputAmount').value),
+        category: document.getElementById('inputCategory').value,
+        description: document.getElementById('inputDescription').value,
+        date: document.getElementById('inputDate').value
       };
 
-      db.collection('users').doc(currentUser.uid).collection('transactions').add(newTx)
-        .then(() => {
-          toggleTransactionModal();
-          e.target.reset();
-        })
-        .catch(err => alert("Error adding transaction: " + err.message));
+      if (currentUser && !isLocalMode) {
+        db.collection('users').doc(currentUser.uid).collection('transactions').add(newEntry)
+          .then(() => {
+            closeAddModal();
+            showToast('Transaction logged to Cloud!', 'success');
+          })
+          .catch(err => showToast(err.message, 'error'));
+      } else {
+        newEntry.id = 'loc-' + Date.now();
+        transactions.push(newEntry);
+        saveLocalData();
+        renderAllViews();
+        closeAddModal();
+        showToast('Transaction saved locally!', 'success');
+      }
+
+      e.target.reset();
     }
+
+    function deleteTransaction(id) {
+      if (currentUser && !isLocalMode) {
+        db.collection('users').doc(currentUser.uid).collection('transactions').doc(id).delete()
+          .then(() => showToast('Record removed.', 'info'))
+          .catch(err => showToast(err.message, 'error'));
+      } else {
+        transactions = transactions.filter(t => t.id !== id);
+        saveLocalData();
+        renderAllViews();
+        showToast('Record removed locally.', 'info');
+      }
+    }
+
+    function exportDataJSON() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(transactions, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `money_flow_backup_${new Date().toISOString().split('T')[0]}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      showToast('Export file downloaded!', 'success');
+    }
+
+    function resetDataToDefault() {
+      transactions = [...defaultData];
+      if (currentUser && !isLocalMode) {
+        showToast('Reset local view.', 'info');
+      } else {
+        saveLocalData();
+        showToast('Reset to default figures.', 'info');
+      }
+      renderAllViews();
+    }
+
+    // Set today's date in header
+    const options = { year: 'numeric', month: 'long' };
+    document.getElementById('dashboardSubHeading').innerText = new Date().toLocaleDateString('en-US', options);
   </script>
 </body>
 </html>
