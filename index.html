@@ -61,12 +61,13 @@
       pointer-events: none;
     }
 
+    /* Main Dashboard Root - Hidden by default until auth succeeds */
     #ft-root {
       font-family: 'Inter', sans-serif;
       background: var(--bg);
       width: 100%;
       min-height: 100vh;
-      display: flex;
+      display: none; /* STRICT LOCK: Unlocks only on login */
       flex-direction: column;
     }
 
@@ -298,7 +299,7 @@
       border-radius: 8px;
       font-size: 14px;
       box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-      z-index: 1000;
+      z-index: 3000;
       display: flex;
       align-items: center;
       gap: 10px;
@@ -315,9 +316,9 @@
     .modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(30, 42, 50, 0.6);
+      background: rgba(30, 42, 50, 0.7);
       backdrop-filter: blur(4px);
-      z-index: 900;
+      z-index: 2500;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -334,29 +335,27 @@
 </head>
 <body>
 
-<!-- Welcome Landing Gate -->
+<!-- Strict Welcome Landing Gate -->
 <div id="welcome-gate">
   <div class="max-w-md w-full bg-[#25333D] border border-white/10 rounded-2xl p-8 shadow-2xl text-center">
     <div class="text-5xl mb-4">🔒</div>
     <h1 class="text-3xl text-[#F7F5EF] mb-2" style="font-family:'Fraunces', serif; font-weight:600;">Money Flow Login</h1>
     <p class="text-sm text-gray-300 mb-6 leading-relaxed">
-     Welcome to MyMoneyFlow
+      Please sign in to access your personal accounts and expense dashboard.
     </p>
-    
     <div class="space-y-3">
-      <!-- Direct Login Trigger -->
-      <button id="gate-auth-btn" class="w-full py-3 px-6 bg-[#2F7A5D] hover:bg-[#25634B] text-white font-medium rounded-xl shadow-lg transition-all">
-        🔑 Sign In / Login to Access
+      <button id="gate-signin-btn" class="w-full py-3 px-6 bg-[#2F7A5D] hover:bg-[#25634B] text-white font-medium rounded-xl shadow-lg transition-all transform hover:-translate-y-0.5">
+        🔑 Sign In to Access Dashboard
       </button>
     </div>
-    
     <div class="mt-6 pt-4 border-t border-white/10 text-xs text-gray-400">
-      🔒 Access is restricted until authentication
+      🔒 Access is restricted to authenticated users only
     </div>
   </div>
 </div>
 
-<div id="ft-root">
+<!-- Main App Root (Hidden by default until successful Auth) -->
+<div id="ft-root" style="display: none;">
   <!-- Sidebar Navigation -->
   <div class="sidebar">
     <div>
@@ -365,14 +364,14 @@
         <span>Money Flow</span>
       </div>
       
-      <!-- Cloud/Local Sync Mode Badge -->
+      <!-- Cloud Sync Status Badge -->
       <div id="sync-status-badge" class="px-3 py-2 mx-2 md:mx-4 mb-2 md:mb-4 rounded-lg bg-black/30 border border-white/10 text-xs flex items-center justify-between text-gray-200">
         <span class="flex items-center gap-2">
           <span id="sync-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
-          <span id="sync-text" class="font-medium">Local Storage</span>
+          <span id="sync-text" class="font-medium">Cloud Synced</span>
         </span>
-        <button id="auth-modal-btn" class="text-[11px] bg-white/10 px-2 py-0.5 rounded hover:bg-white/20 text-white transition-colors" title="Manage Auth & Cloud Setup">
-          Config / Auth
+        <button id="auth-modal-btn" class="text-[11px] bg-white/10 px-2 py-0.5 rounded hover:bg-white/20 text-white transition-colors" title="Account Settings">
+          Account
         </button>
       </div>
     </div>
@@ -388,8 +387,8 @@
 
     <!-- Sidebar User Footer -->
     <div class="hidden md:block mt-auto p-4 border-t border-white/10 text-xs text-gray-400">
-      <div class="font-medium text-gray-200 truncate" id="sidebar-user-id">Local Offline Mode</div>
-      <div class="text-[10px] opacity-75 truncate" id="sidebar-user-email">Data saved in browser</div>
+      <div class="font-medium text-gray-200 truncate" id="sidebar-user-id">Checking account...</div>
+      <div class="text-[10px] opacity-75 truncate" id="sidebar-user-email">Firestore connected</div>
     </div>
   </div>
 
@@ -422,82 +421,19 @@
   </div>
 </div>
 
-<!-- Auth & Cloud Config Modal -->
+<!-- Auth Sign In Modal -->
 <div id="auth-modal" class="modal-backdrop">
   <div class="bg-white rounded-xl max-w-lg w-full p-6 shadow-2xl border border-gray-200 max-h-[90vh] overflow-y-auto">
     <div class="flex justify-between items-center mb-4">
       <div>
-        <h3 class="text-xl font-serif font-semibold text-gray-900">Cloud Sync & Firebase Config</h3>
-        <p class="text-xs text-gray-500">Configure your project keys or sign in for real-time sync</p>
+        <h3 class="text-xl font-serif font-semibold text-gray-900">User Authentication</h3>
+        <p class="text-xs text-gray-500">Sign in to unlock and sync your dashboard</p>
       </div>
       <button id="auth-modal-close" class="text-gray-400 hover:text-gray-600 text-2xl font-bold">&times;</button>
     </div>
 
-    <!-- Mode Banner inside Modal -->
-    <div id="modal-status-banner" class="mb-4 p-3 rounded-lg text-xs flex items-center justify-between border bg-slate-50 border-slate-200 text-slate-700">
-      <span id="modal-status-text"><strong>Current Status:</strong> Running in Local Mode (Offline).</span>
-    </div>
-
-    <!-- Tabs inside Modal -->
-    <div class="flex border-b border-gray-200 mb-4 text-sm font-medium">
-      <button id="modal-tab-config-btn" class="py-2 px-4 border-b-2 border-emerald-600 text-emerald-700 font-semibold focus:outline-none">⚙️ Firebase Keys Setup</button>
-      <button id="modal-tab-auth-btn" class="py-2 px-4 border-b-2 border-transparent text-gray-500 hover:text-gray-700 focus:outline-none">👤 User Account Sign In</button>
-    </div>
-
-    <!-- TAB 1: Firebase Configuration -->
-    <div id="modal-tab-config" class="space-y-4">
-      <div class="bg-amber-50 border border-amber-200 text-amber-900 rounded-lg p-3 text-xs leading-relaxed">
-        <strong>💡 Note on Firebase Setup:</strong><br/>
-        Money Flow works 100% offline in Local Mode out of the box! If you want cross-device sync, paste your standard Firebase project config below (from Firebase Console &gt; Project Settings).
-      </div>
-
-      <div>
-        <label class="block text-xs font-semibold text-gray-700 mb-1">Paste Firebase Config JSON Object</label>
-        <textarea id="cfg-json-input" rows="4" placeholder='{
-  "apiKey": "AIzaSy...",
-  "authDomain": "my-app.firebaseapp.com",
-  "projectId": "my-app-id",
-  "appId": "1:1234..."
-}' class="font-mono text-xs p-2 border rounded-lg w-full bg-slate-50 focus:bg-white"></textarea>
-      </div>
-
-      <div class="text-center text-xs text-gray-400 font-medium my-1">— OR MANUALLY FILL FIELDS —</div>
-
-      <div class="grid grid-cols-2 gap-3 text-xs">
-        <div>
-          <label class="font-medium text-gray-700">API Key</label>
-          <input type="text" id="cfg-apiKey" placeholder="AIzaSy..." class="px-2 py-1.5 border rounded" />
-        </div>
-        <div>
-          <label class="font-medium text-gray-700">Auth Domain</label>
-          <input type="text" id="cfg-authDomain" placeholder="app.firebaseapp.com" class="px-2 py-1.5 border rounded" />
-        </div>
-        <div>
-          <label class="font-medium text-gray-700">Project ID</label>
-          <input type="text" id="cfg-projectId" placeholder="my-project-id" class="px-2 py-1.5 border rounded" />
-        </div>
-        <div>
-          <label class="font-medium text-gray-700">App ID</label>
-          <input type="text" id="cfg-appId" placeholder="1:12345678:web:..." class="px-2 py-1.5 border rounded" />
-        </div>
-      </div>
-
-      <div class="flex gap-2 pt-2">
-        <button id="save-cfg-btn" class="flex-1 bg-emerald-700 text-white py-2.5 rounded-lg text-sm font-medium hover:bg-emerald-800 transition-all shadow">
-          💾 Save & Connect Firebase
-        </button>
-        <button id="clear-cfg-btn" class="bg-gray-100 text-gray-700 px-3 py-2.5 rounded-lg text-xs font-medium hover:bg-gray-200">
-          Reset Keys
-        </button>
-      </div>
-    </div>
-
-    <!-- TAB 2: Auth Sign In -->
-    <div id="modal-tab-auth" class="space-y-4 hidden">
-      <p class="text-xs text-gray-600">
-        Sign in to sync your balances and transactions across your mobile and desktop devices.
-      </p>
-
+    <!-- User Auth Container -->
+    <div class="space-y-4">
       <button id="google-signin-btn" class="w-full py-2.5 px-4 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center justify-center gap-2">
         <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
         Sign in with Google
@@ -524,7 +460,7 @@
       </form>
 
       <div class="pt-3 border-t border-gray-100 flex justify-between items-center text-xs text-gray-500">
-        <span>Current User: <code class="bg-gray-100 px-1 py-0.5 rounded font-mono" id="modal-uid-display">Offline</code></span>
+        <span>Current User: <code class="bg-gray-100 px-1 py-0.5 rounded font-mono" id="modal-uid-display">Not Authenticated</code></span>
         <button id="sign-out-btn" class="text-rose-600 font-medium hover:underline">Sign Out</button>
       </div>
     </div>
@@ -535,7 +471,6 @@
 import { initializeApp, deleteApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { 
   getAuth, 
-  signInAnonymously, 
   signInWithPopup, 
   GoogleAuthProvider, 
   signInWithEmailAndPassword, 
@@ -554,10 +489,18 @@ import {
   deleteDoc 
 } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-// Application Constants
-const APP_ID = typeof __app_id !== 'undefined' ? __app_id : 'money-flow-prod';
+// HARDCODED FIREBASE KEYS (Direct Integration)
+const firebaseConfig = {
+  apiKey: "AIzaSyB25VVAI7YRTmnPJ8j_I1cVskvje_1TRYA",
+  authDomain: "mymoneyflow15.firebaseapp.com",
+  projectId: "mymoneyflow15",
+  storageBucket: "mymoneyflow15.firebasestorage.app",
+  messagingSenderId: "41077570008",
+  appId: "1:41077570008:web:5ae22b4a073e8cc5de25ad"
+};
+
+const APP_ID = 'money-flow-prod';
 const STORAGE_KEY = 'money_flow_app_data_v3';
-const FIREBASE_CFG_KEY = 'money_flow_firebase_config_v3';
 
 const ACCOUNTS = ["SBI", "INDUS"];
 const TYPES = ["Expense", "Income", "Transfer"];
@@ -583,45 +526,6 @@ const defaultSettings = {
   indusStart: 25000,
 };
 
-const initialDemoTransactions = [
-  {
-    id: "tx_demo_1",
-    date: new Date().toISOString().slice(0, 10),
-    account: "SBI",
-    type: "Expense",
-    category: "Groceries",
-    amount: 1450,
-    description: "Weekly Organic Market Shopping",
-    notes: "Vegetables & Essentials",
-    toAccount: null,
-    month: new Date().toISOString().slice(0, 7)
-  },
-  {
-    id: "tx_demo_2",
-    date: new Date().toISOString().slice(0, 10),
-    account: "INDUS",
-    type: "Income",
-    category: "Other",
-    amount: 45000,
-    description: "Monthly Salary / Income",
-    notes: "Direct Deposit",
-    toAccount: null,
-    month: new Date().toISOString().slice(0, 7)
-  },
-  {
-    id: "tx_demo_3",
-    date: new Date().toISOString().slice(0, 10),
-    account: "INDUS",
-    type: "Transfer",
-    category: "Other",
-    amount: 10000,
-    description: "Transfer to SBI for Savings",
-    notes: "Internal Transfer",
-    toAccount: "SBI",
-    month: new Date().toISOString().slice(0, 7)
-  }
-];
-
 let state = {
   user: null,
   userId: null,
@@ -634,11 +538,7 @@ let state = {
   filterCategory: "ALL",
   filterType: "ALL",
   sortBy: "date-desc",
-  
-  // Cloud Mode state
-  isCloudActive: false,
-  cloudErrorMsg: "",
-  fbConfig: null
+  isCloudActive: false
 };
 
 let settingsDraft = null;
@@ -664,16 +564,14 @@ function loadLocalStorage() {
     if (raw) {
       const parsed = JSON.parse(raw);
       state.settings = parsed.settings || { ...defaultSettings };
-      state.transactions = parsed.transactions || [...initialDemoTransactions];
+      state.transactions = parsed.transactions || [];
     } else {
       state.settings = { ...defaultSettings };
-      state.transactions = [...initialDemoTransactions];
-      saveLocalStorage();
+      state.transactions = [];
     }
   } catch(e) {
-    console.error("Error reading localStorage:", e);
     state.settings = { ...defaultSettings };
-    state.transactions = [...initialDemoTransactions];
+    state.transactions = [];
   }
 }
 
@@ -683,31 +581,7 @@ function saveLocalStorage() {
       settings: state.settings,
       transactions: state.transactions
     }));
-  } catch(e) {
-    console.error("Error writing to localStorage:", e);
-  }
-}
-
-function getStoredFirebaseConfig() {
-  try {
-    const stored = localStorage.getItem(FIREBASE_CFG_KEY);
-    if (stored) {
-      const parsed = JSON.parse(stored);
-      if (parsed && parsed.apiKey && !parsed.apiKey.includes('Demo') && !parsed.apiKey.includes('YOUR_API_KEY')) {
-        return parsed;
-      }
-    }
   } catch(e) {}
-
-  if (typeof __firebase_config !== 'undefined') {
-    try {
-      const injected = typeof __firebase_config === 'string' ? JSON.parse(__firebase_config) : __firebase_config;
-      if (injected && injected.apiKey && !injected.apiKey.includes('Demo') && !injected.apiKey.includes('AIzaSyDemo')) {
-        return injected;
-      }
-    } catch(e) {}
-  }
-  return null;
 }
 
 function showToast(message, icon = "✅") {
@@ -721,20 +595,13 @@ function showToast(message, icon = "✅") {
 function updateSyncStatusUI() {
   const dot = document.getElementById("sync-dot");
   const label = document.getElementById("sync-text");
-  const banner = document.getElementById("modal-status-text");
 
   if (state.isCloudActive && state.user) {
-    dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse";
-    label.textContent = "Cloud Synced";
-    if (banner) banner.innerHTML = `<strong>Status:</strong> Connected to Cloud Firestore (${esc(state.user.email || 'Authenticated User')})`;
-  } else if (state.cloudErrorMsg) {
-    dot.className = "w-2.5 h-2.5 rounded-full bg-amber-400";
-    label.textContent = "Local Mode";
-    if (banner) banner.innerHTML = `<strong>Local Mode Active:</strong> ${esc(state.cloudErrorMsg)}`;
+    if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse";
+    if (label) label.textContent = "Cloud Synced";
   } else {
-    dot.className = "w-2.5 h-2.5 rounded-full bg-slate-400";
-    label.textContent = "Local Mode";
-    if (banner) banner.innerHTML = `<strong>Status:</strong> Running smoothly in Local Storage Mode (Offline).`;
+    if (dot) dot.className = "w-2.5 h-2.5 rounded-full bg-rose-400";
+    if (label) label.textContent = "Not Authenticated";
   }
 }
 
@@ -772,57 +639,44 @@ function computeMonthly(transactions) {
   return months;
 }
 
-async function setupFirebaseInstance(config) {
-  if (unsubSettings) unsubSettings();
-  if (unsubTx) unsubTx();
-
-  if (!config || !config.apiKey || config.apiKey.includes('Demo') || config.apiKey.includes('YOUR_API_KEY')) {
-    state.isCloudActive = false;
-    state.cloudErrorMsg = "No valid custom Firebase API Key found. Operating in Local Mode.";
-    updateSyncStatusUI();
-    return false;
-  }
-
+async function initFirebase() {
   try {
-    if (firebaseAppInstance) {
-      await deleteApp(firebaseAppInstance);
-    }
-    firebaseAppInstance = initializeApp(config);
+    firebaseAppInstance = initializeApp(firebaseConfig);
     firebaseAuthInstance = getAuth(firebaseAppInstance);
     firebaseDbInstance = getFirestore(firebaseAppInstance);
 
-   // Firebase Auth State Listener inside index.html
-onAuthStateChanged(firebaseAuthInstance, (user) => {
-  const gate = document.getElementById("welcome-gate");
-  if (user && !user.isAnonymous) {
-    // ONLY IF USER IS LOGGED IN: Unlock & Hide Gate
-    state.user = user;
-    state.userId = user.uid;
-    state.isCloudActive = true;
-    state.cloudErrorMsg = "";
-    
-    gate?.classList.add("hidden-gate"); // Dashboard opens here
-    attachFirestoreRealtimeListeners(user.uid);
-  } else {
-    // NOT LOGGED IN: Keep Gate Locked
-    state.user = null;
-    state.userId = null;
-    state.isCloudActive = false;
-    
-    gate?.classList.remove("hidden-gate"); // Gate stays locked on screen
-  }
-  
-  updateSyncStatusUI();
-  render();
-});
+    // STRICT AUTH STATE LISTENER
+    onAuthStateChanged(firebaseAuthInstance, (user) => {
+      const mainApp = document.getElementById("ft-root");
+      const welcomeGate = document.getElementById("welcome-gate");
+      const authModal = document.getElementById("auth-modal");
 
-    return true;
+      if (user && !user.isAnonymous) {
+        // LOGGED IN: Unlock Dashboard
+        state.user = user;
+        state.userId = user.uid;
+        state.isCloudActive = true;
+
+        if (mainApp) mainApp.style.display = "flex"; // Show Dashboard
+        welcomeGate?.classList.add("hidden-gate"); // Hide Gate
+        authModal?.classList.remove("active");
+
+        attachFirestoreRealtimeListeners(user.uid);
+        render();
+      } else {
+        // NOT LOGGED IN: Strictly Lock Gate & Hide Dashboard
+        state.user = null;
+        state.userId = null;
+        state.isCloudActive = false;
+
+        if (mainApp) mainApp.style.display = "none"; // Hide Dashboard Completely
+        welcomeGate?.classList.remove("hidden-gate"); // Show Gate
+      }
+
+      updateSyncStatusUI();
+    });
   } catch (err) {
-    console.warn("Graceful Firebase Initialization Fallback:", err);
-    state.isCloudActive = false;
-    state.cloudErrorMsg = err.message || "Failed to initialize Firebase credentials.";
-    updateSyncStatusUI();
-    return false;
+    console.error("Firebase init failed:", err);
   }
 }
 
@@ -838,8 +692,6 @@ function attachFirestoreRealtimeListeners(userId) {
     } else {
       setDoc(settingsDocRef, state.settings).catch(console.error);
     }
-  }, (err) => {
-    console.warn("Firestore settings error:", err);
   });
 
   const txColRef = collection(firebaseDbInstance, 'artifacts', APP_ID, 'users', userId, 'transactions');
@@ -848,17 +700,13 @@ function attachFirestoreRealtimeListeners(userId) {
     querySnap.forEach((docSnap) => {
       txs.push({ id: docSnap.id, ...docSnap.data() });
     });
-    if (txs.length > 0) {
-      state.transactions = txs;
-      saveLocalStorage();
-      render();
-    }
-  }, (err) => {
-    console.warn("Firestore transactions error:", err);
+    state.transactions = txs;
+    saveLocalStorage();
+    render();
   });
 }
 
-// Data persistence wrappers (Cloud + Local Fallback)
+// Data persistence wrappers
 async function saveSettings(nextSettings) {
   state.settings = nextSettings;
   saveLocalStorage();
@@ -867,12 +715,8 @@ async function saveSettings(nextSettings) {
     try {
       const settingsDocRef = doc(firebaseDbInstance, 'artifacts', APP_ID, 'users', state.userId, 'settings', 'userSettings');
       await setDoc(settingsDocRef, nextSettings, { merge: true });
-      showToast("Saved settings to Cloud & Local!", "💾");
-    } catch(e) {
-      showToast("Saved to Local Storage", "💾");
-    }
-  } else {
-    showToast("Settings saved locally!", "💾");
+      showToast("Saved settings to Cloud!", "💾");
+    } catch(e) {}
   }
 }
 
@@ -885,12 +729,8 @@ async function addTransaction(txn) {
     try {
       const txColRef = collection(firebaseDbInstance, 'artifacts', APP_ID, 'users', state.userId, 'transactions');
       await addDoc(txColRef, { ...txn, createdAt: new Date().toISOString() });
-      showToast("Added transaction to Cloud & Local!", "➕");
-    } catch(e) {
-      showToast("Added transaction locally", "➕");
-    }
-  } else {
-    showToast("Transaction saved locally!", "➕");
+      showToast("Added transaction to Cloud!", "➕");
+    } catch(e) {}
   }
   render();
 }
@@ -906,12 +746,8 @@ async function updateTransaction(txId, txnData) {
     try {
       const txDocRef = doc(firebaseDbInstance, 'artifacts', APP_ID, 'users', state.userId, 'transactions', txId);
       await updateDoc(txDocRef, txnData);
-      showToast("Updated transaction on Cloud!", "✏️");
-    } catch(e) {
-      showToast("Updated transaction locally", "✏️");
-    }
-  } else {
-    showToast("Transaction updated locally!", "✏️");
+      showToast("Updated transaction!", "✏️");
+    } catch(e) {}
   }
   render();
 }
@@ -924,12 +760,8 @@ async function deleteTransaction(txId) {
     try {
       const txDocRef = doc(firebaseDbInstance, 'artifacts', APP_ID, 'users', state.userId, 'transactions', txId);
       await deleteDoc(txDocRef);
-      showToast("Deleted from Cloud & Local", "🗑️");
-    } catch(e) {
-      showToast("Deleted transaction locally", "🗑️");
-    }
-  } else {
-    showToast("Transaction deleted locally", "🗑️");
+      showToast("Deleted from Cloud", "🗑️");
+    } catch(e) {}
   }
   render();
 }
@@ -977,7 +809,7 @@ function renderDashboard() {
       </div>
 
       ${categorySpends.length === 0 ? `
-        <div class="empty" style="padding: 24px 0;">No expenses logged for ${esc(monthLabel(currentMonthKey))} yet. Add transactions to view visual spending analytics.</div>
+        <div class="empty" style="padding: 24px 0;">No expenses logged for ${esc(monthLabel(currentMonthKey))} yet. Add transactions to view analytics.</div>
       ` : `
         <!-- Stacked Bar Visual -->
         <div class="bar-wrap" style="margin-bottom:24px;">
@@ -1018,7 +850,6 @@ function renderTransactions() {
   const { transactions, editingTxId, filterAccount, filterCategory, filterType, sortBy } = state;
   const editingTx = editingTxId ? transactions.find(t => t.id === editingTxId) : null;
 
-  // Filter in memory
   let filtered = transactions.filter(t => {
     if (filterAccount !== "ALL" && t.account !== filterAccount && t.toAccount !== filterAccount) return false;
     if (filterCategory !== "ALL" && t.category !== filterCategory) return false;
@@ -1026,10 +857,9 @@ function renderTransactions() {
     return true;
   });
 
-  // Sort in memory
   filtered.sort((a, b) => {
     if (sortBy === "date-desc") return (b.date || "").localeCompare(a.date || "");
-    if (sortBy === "date-asc") return (a.date || "").localeCompare(b.date || "");
+    if (sortBy === "date-asc") return (a.date || "").localeCompare(a.date || "");
     if (sortBy === "amount-desc") return (Number(b.amount) || 0) - (Number(a.amount) || 0);
     if (sortBy === "amount-asc") return (Number(a.amount) || 0) - (Number(b.amount) || 0);
     return 0;
@@ -1051,7 +881,6 @@ function renderTransactions() {
     <div class="card" style="margin-top:20px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
         <h3 style="font-size:16px;">${editingTx ? "Edit transaction" : "Add a transaction"}</h3>
-        ${editingTx ? `<span class="muted" style="font-size:12px;">Editing ID: ${esc(editingTx.id.slice(0, 8))}...</span>` : ""}
       </div>
       
       <div class="grid grid-3">
@@ -1232,7 +1061,6 @@ function renderMonthly() {
 
 function renderSettings() {
   settingsDraft = JSON.parse(JSON.stringify(state.settings));
-  const savedCfg = getStoredFirebaseConfig();
 
   return `
     <h1 style="font-size:24px;">Settings & Preferences</h1>
@@ -1247,34 +1075,15 @@ function renderSettings() {
       <button class="btn" id="save-settings-btn" style="margin-top:20px;">Save Opening Balances</button>
     </div>
 
-    <!-- Firebase Cloud Config Panel -->
-    <div class="card" style="margin-top:20px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <h3 style="font-size:16px;">Firebase Cloud Sync Configuration</h3>
-        <span class="px-2 py-0.5 rounded text-xs ${state.isCloudActive ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-700'}">
-          ${state.isCloudActive ? '● Cloud Connected' : '○ Local Storage Mode'}
-        </span>
-      </div>
-      <p class="muted" style="font-size:13px; margin-bottom:16px;">
-        Money Flow seamlessly works locally in your browser. To sync across your phone and laptop, enter your Firebase credentials below or open the setup modal.
-      </p>
-
-      <div style="display:flex; gap:10px; flex-wrap:wrap;">
-        <button class="btn btn-secondary" id="open-config-modal-btn">⚙️ Configure Firebase Keys</button>
-        ${savedCfg ? `<button class="btn btn-outline" id="clear-config-settings-btn">Reset Firebase Keys</button>` : ''}
-      </div>
-    </div>
-
-    <!-- Local Data Management -->
+    <!-- Data Management -->
     <div class="card" style="margin-top:20px;">
       <h3 style="font-size:16px; margin-bottom:8px;">Data Import & Export</h3>
-      <p class="muted" style="font-size:13px; margin-bottom:16px;">Export your complete transaction ledger to JSON or reset local cache.</p>
+      <p class="muted" style="font-size:13px; margin-bottom:16px;">Export your complete transaction ledger to JSON or import existing backup.</p>
       
       <div style="display:flex; gap:10px; flex-wrap:wrap;">
         <button class="btn btn-secondary" id="export-json-btn">📥 Export Data (JSON)</button>
         <button class="btn btn-outline" id="import-json-btn">📤 Import Data (JSON)</button>
         <input type="file" id="import-file-input" accept=".json" style="display:none;" />
-        <button class="btn" id="reset-all-data-btn" style="background:var(--expense);">🗑 Reset All Local Data</button>
       </div>
     </div>
   `;
@@ -1391,16 +1200,6 @@ function attachSettingsEvents() {
     render();
   });
 
-  document.getElementById("open-config-modal-btn")?.addEventListener("click", () => {
-    document.getElementById("auth-modal").classList.add("active");
-  });
-
-  document.getElementById("clear-config-settings-btn")?.addEventListener("click", () => {
-    localStorage.removeItem(FIREBASE_CFG_KEY);
-    showToast("Firebase keys cleared. Running in Local Mode.", "🧹");
-    setTimeout(() => location.reload(), 800);
-  });
-
   // Export JSON
   document.getElementById("export-json-btn")?.addEventListener("click", () => {
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({
@@ -1444,17 +1243,6 @@ function attachSettingsEvents() {
     };
     reader.readAsText(file);
   });
-
-  // Reset All Data
-  document.getElementById("reset-all-data-btn")?.addEventListener("click", () => {
-    if (confirm("Are you sure you want to reset all local transaction records?")) {
-      state.transactions = [];
-      state.settings = { ...defaultSettings };
-      saveLocalStorage();
-      showToast("Local data reset", "🧹");
-      render();
-    }
-  });
 }
 
 function render() {
@@ -1488,28 +1276,16 @@ function render() {
   const emailDisp = document.getElementById("sidebar-user-email");
   const modalUid = document.getElementById("modal-uid-display");
   
-  if (userDisp) {
-    userDisp.textContent = state.user?.displayName || (state.user ? (state.user.isAnonymous ? "Guest Mode" : state.user.email) : "Local Offline Mode");
-  }
-  if (emailDisp) {
-    emailDisp.textContent = state.isCloudActive ? "Cloud Synced (Firestore)" : "Data saved locally";
-  }
-  if (modalUid) {
-    modalUid.textContent = state.userId ? state.userId.slice(0, 10) + '...' : "Local Mode";
-  }
+  if (userDisp) userDisp.textContent = state.user?.displayName || state.user?.email || "Authenticated User";
+  if (emailDisp) emailDisp.textContent = state.user?.email || "Cloud Synced";
+  if (modalUid) modalUid.textContent = state.userId ? state.userId.slice(0, 10) + '...' : "Not Authenticated";
 
   updateSyncStatusUI();
 }
 
 function setupGlobalEvents() {
-  // Gate handlers
-  const gate = document.getElementById("welcome-gate");
-  document.getElementById("gate-enter-btn")?.addEventListener("click", () => {
-    gate?.classList.add("hidden-gate");
-  });
-
-  document.getElementById("gate-auth-btn")?.addEventListener("click", () => {
-    gate?.classList.add("hidden-gate");
+  // Gate sign-in trigger
+  document.getElementById("gate-signin-btn")?.addEventListener("click", () => {
     document.getElementById("auth-modal")?.classList.add("active");
   });
 
@@ -1519,78 +1295,6 @@ function setupGlobalEvents() {
       state.editingTxId = null;
       render();
     });
-  });
-
-  // Modal tab switching
-  const tabConfigBtn = document.getElementById("modal-tab-config-btn");
-  const tabAuthBtn = document.getElementById("modal-tab-auth-btn");
-  const tabConfig = document.getElementById("modal-tab-config");
-  const tabAuth = document.getElementById("modal-tab-auth");
-
-  tabConfigBtn?.addEventListener("click", () => {
-    tabConfig.classList.remove("hidden");
-    tabAuth.classList.add("hidden");
-    tabConfigBtn.className = "py-2 px-4 border-b-2 border-emerald-600 text-emerald-700 font-semibold focus:outline-none";
-    tabAuthBtn.className = "py-2 px-4 border-b-2 border-transparent text-gray-500 hover:text-gray-700 focus:outline-none";
-  });
-
-  tabAuthBtn?.addEventListener("click", () => {
-    tabAuth.classList.remove("hidden");
-    tabConfig.classList.add("hidden");
-    tabAuthBtn.className = "py-2 px-4 border-b-2 border-emerald-600 text-emerald-700 font-semibold focus:outline-none";
-    tabConfigBtn.className = "py-2 px-4 border-b-2 border-transparent text-gray-500 hover:text-gray-700 focus:outline-none";
-  });
-
-  // Save Firebase Config
-  document.getElementById("save-cfg-btn")?.addEventListener("click", async () => {
-    const jsonStr = document.getElementById("cfg-json-input").value.trim();
-    let newCfg = null;
-
-    if (jsonStr) {
-      try {
-        newCfg = JSON.parse(jsonStr);
-      } catch(e) {
-        showToast("Invalid JSON string in Firebase config box", "❌");
-        return;
-      }
-    } else {
-      const apiKey = document.getElementById("cfg-apiKey").value.trim();
-      const authDomain = document.getElementById("cfg-authDomain").value.trim();
-      const projectId = document.getElementById("cfg-projectId").value.trim();
-      const appId = document.getElementById("cfg-appId").value.trim();
-
-      if (!apiKey || !projectId) {
-        showToast("Please provide at least API Key and Project ID", "⚠️");
-        return;
-      }
-
-      newCfg = { apiKey, authDomain, projectId, appId };
-    }
-
-    localStorage.setItem(FIREBASE_CFG_KEY, JSON.stringify(newCfg));
-    showToast("Firebase Config saved! Connecting...", "🔄");
-    
-    const success = await setupFirebaseInstance(newCfg);
-    if (success) {
-      showToast("Connected to Firebase!", "🎉");
-      document.getElementById("auth-modal").classList.remove("active");
-    } else {
-      showToast("Config saved, but Firebase connection failed. Staying in Local Mode.", "⚠️");
-    }
-    render();
-  });
-
-  document.getElementById("clear-cfg-btn")?.addEventListener("click", () => {
-    localStorage.removeItem(FIREBASE_CFG_KEY);
-    document.getElementById("cfg-json-input").value = "";
-    document.getElementById("cfg-apiKey").value = "";
-    document.getElementById("cfg-authDomain").value = "";
-    document.getElementById("cfg-projectId").value = "";
-    document.getElementById("cfg-appId").value = "";
-    showToast("Config cleared. Reverting to Local Mode.", "🧹");
-    state.isCloudActive = false;
-    state.cloudErrorMsg = "No active Firebase config";
-    updateSyncStatusUI();
   });
 
   // Modal toggles
@@ -1616,59 +1320,47 @@ function setupGlobalEvents() {
     document.getElementById("delete-modal").classList.remove("active");
   });
 
-  // Auth buttons
+  // Google Sign-In
   document.getElementById("google-signin-btn")?.addEventListener("click", async () => {
-    if (!firebaseAuthInstance) {
-      showToast("Please configure valid Firebase Keys first!", "⚠️");
-      return;
-    }
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(firebaseAuthInstance, provider);
-      document.getElementById("auth-modal").classList.remove("active");
       showToast("Signed in with Google!", "🎉");
     } catch (e) {
       showToast(e.message || "Google Auth Error", "❌");
     }
   });
 
+  // Email Sign-In Form
   document.getElementById("email-auth-form")?.addEventListener("submit", async (e) => {
     e.preventDefault();
-    if (!firebaseAuthInstance) {
-      showToast("Please configure valid Firebase Keys first!", "⚠️");
-      return;
-    }
     const email = document.getElementById("auth-email").value;
     const password = document.getElementById("auth-password").value;
     try {
       await signInWithEmailAndPassword(firebaseAuthInstance, email, password);
-      document.getElementById("auth-modal").classList.remove("active");
       showToast("Signed in successfully!", "🔑");
     } catch (e) {
       showToast(e.message || "Sign in failed", "❌");
     }
   });
 
+  // Email Sign-Up Button
   document.getElementById("email-signup-btn")?.addEventListener("click", async () => {
-    if (!firebaseAuthInstance) {
-      showToast("Please configure valid Firebase Keys first!", "⚠️");
-      return;
-    }
     const email = document.getElementById("auth-email").value;
     const password = document.getElementById("auth-password").value;
     try {
       await createUserWithEmailAndPassword(firebaseAuthInstance, email, password);
-      document.getElementById("auth-modal").classList.remove("active");
-      showToast("Account created!", "🎉");
+      showToast("Account created successfully!", "🎉");
     } catch (e) {
       showToast(e.message || "Sign up failed", "❌");
     }
   });
 
+  // Sign Out Button
   document.getElementById("sign-out-btn")?.addEventListener("click", async () => {
     if (firebaseAuthInstance) {
       await signOut(firebaseAuthInstance);
-      showToast("Signed out of Firebase", "👋");
+      showToast("Signed out", "👋");
     }
   });
 }
@@ -1676,24 +1368,7 @@ function setupGlobalEvents() {
 window.addEventListener("DOMContentLoaded", async () => {
   loadLocalStorage();
   setupGlobalEvents();
-
-  const cfg = getStoredFirebaseConfig();
-  if (cfg) {
-    // Fill modal form inputs
-    document.getElementById("cfg-apiKey").value = cfg.apiKey || "";
-    document.getElementById("cfg-authDomain").value = cfg.authDomain || "";
-    document.getElementById("cfg-projectId").value = cfg.projectId || "";
-    document.getElementById("cfg-appId").value = cfg.appId || "";
-
-    // Attempt Firebase connection safely
-    await setupFirebaseInstance(cfg);
-  } else {
-    state.isCloudActive = false;
-    state.cloudErrorMsg = "Running in Local Storage mode (Offline).";
-    updateSyncStatusUI();
-  }
-
-  render();
+  await initFirebase();
 });
 </script>
 </body>
