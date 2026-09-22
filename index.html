@@ -963,16 +963,27 @@ function renderTransactions() {
     <div class="card" style="margin-top:20px; padding:0;">
       <div style="overflow-x:auto;">
         <table>
-          <thead><tr><th>Date</th><th>Account</th><th>Description</th><th>Category</th><th>Type</th><th>Amount</th><th>Notes</th><th>Actions</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Account</th>
+              <th>Type</th>
+              <th>Category</th>
+              <th>Description</th>
+              <th>Amount</th>
+              <th>Notes</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
           <tbody>
             ${filtered.length === 0 ? `<tr><td colspan="8" class="empty">No transactions found matching your filter criteria.</td></tr>` :
               filtered.map((t) => `
                 <tr style="${editingTxId === t.id ? "background: #F7F5EF;" : ""}">
                   <td>${esc(t.date)}</td>
                   <td style="color:${t.account === "SBI" ? "var(--sbi)" : "var(--indus)"}">${esc(t.account)}${t.type === "Transfer" ? ` → ${esc(t.toAccount)}` : ""}</td>
-                  <td>${esc(t.description)}</td>
-                  <td class="muted">${esc(t.category)}</td>
                   <td class="muted">${esc(t.type)}</td>
+                  <td class="muted">${esc(t.category)}</td>
+                  <td>${esc(t.description)}</td>
                   <td style="color:${t.type === "Income" ? "var(--savings)" : t.type === "Expense" ? "var(--expense)" : "var(--ink)"}">${t.type === "Income" ? "+" : t.type === "Expense" ? "−" : ""}${inr(t.amount)}</td>
                   <td class="muted">${esc(t.notes)}</td>
                   <td style="white-space:nowrap;">
@@ -987,7 +998,7 @@ function renderTransactions() {
     </div>
   `;
 }
-
+  
 function renderAccounts() {
   const { settings, transactions } = state;
   function compute(acct) {
